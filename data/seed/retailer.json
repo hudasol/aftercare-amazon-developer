@@ -103,7 +103,11 @@
           "resolution": "refund",
           "returnShipping": "prepaid_label"
         }
-      ]
+      ],
+      "appliesTo": {
+        "basis": "order_date",
+        "text": "This version applies to orders placed from January 1, 2026 through September 30, 2026, including returns requested after that date."
+      }
     },
     {
       "policyId": "kestrel-returns",
@@ -156,7 +160,11 @@
           "resolution": "refund",
           "returnShipping": "prepaid_label"
         }
-      ]
+      ],
+      "appliesTo": {
+        "basis": "order_date",
+        "text": "This version applies to orders placed on or after October 1, 2026. Orders placed earlier keep the terms in effect when they were placed."
+      }
     }
   ],
   "submissionScript": [

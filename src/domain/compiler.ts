@@ -592,7 +592,7 @@ export function compileCase(input: CompilerInput): Assessment {
       key: 'governing_policy',
       label: 'Governing policy',
       value: `v${governing.version}`,
-      basis: `${GOVERNING_VERSION_RULE} Order date ${rep?.orderedOn ?? focus?.order.orderedOn[0] ?? 'unknown'}.`,
+      basis: `Policy text: “${governing.appliesTo.text}” Order date ${rep?.orderedOn ?? focus?.order.orderedOn[0] ?? 'unknown'}.`,
     });
   }
   trace.push({

@@ -38,16 +38,22 @@ export const PolicyDocumentSchema = z.object({
   returnlessRefundMaxCents: z.number().int().nonnegative(),
   /** What the policy points customers to once a defective item is outside every return window. */
   afterWindowDefectRemedy: z.enum(['manufacturer_warranty', 'none']),
+  /**
+   * Which orders this version governs, as stated in the policy itself. Only
+   * order-date scoping is supported: a version governs orders placed while it
+   * is in effect.
+   */
+  appliesTo: z.object({ basis: z.literal('order_date'), text: z.string().min(1) }),
 });
 export type PolicyDocument = z.infer<typeof PolicyDocumentSchema>;
 
 /**
- * Governing-version rule: the version in effect on the order date governs the
- * order, even if a newer version has since been published. This is a stated
- * assumption of the demo retailer's policy, documented in docs/ARCHITECTURE.md.
+ * How the governing version is chosen. This is not an assumption in code: each
+ * policy document states its scope in `appliesTo`, and the schema accepts only
+ * order-date scoping, so the version in effect on the order date governs.
  */
 export const GOVERNING_VERSION_RULE =
-  'The policy version in effect on the order date governs that order.';
+  'Each policy version says it applies to orders placed while it is in effect, so the version in effect on the order date governs.';
 
 export type PolicySelection =
   | {
