@@ -42,10 +42,17 @@ async function main(): Promise<void> {
   });
 
   const shutdown = () => {
+    // Browsers hold keep-alive connections open; close them so shutdown cannot hang.
     server.close(() => {
       container.close();
       process.exit(0);
     });
+    server.closeIdleConnections();
+    setTimeout(() => {
+      server.closeAllConnections();
+      container.close();
+      process.exit(0);
+    }, 2000).unref();
   };
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);
