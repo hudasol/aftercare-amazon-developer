@@ -48,9 +48,9 @@ test('Return Rescue: blocked, resolved, approved, ambiguous timeout, reconciled,
   await page.getByLabel('Message').fill('Yes, go ahead!');
   await page.getByRole('button', { name: 'Send', exact: true }).click();
   await expect(page.getByText('I only act on an explicit approval').first()).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Approve return' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Approve and send return' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Approve return' }).click();
+  await page.getByRole('button', { name: 'Approve and send return' }).click();
   // The seeded retailer loses the first response; the surface reconciles and verifies by itself.
   await expect(slip.locator('.slip-stamp')).toHaveText('CONFIRMED', { timeout: 20_000 });
   await expect(page.locator('.now-speech')).toContainText('confirmed');
@@ -83,7 +83,7 @@ test('the older pair is refused with the reason, and nothing is proposed', async
   await giveSerial(page, 'HA-7Q2-0193');
   await expect(page.getByRole('heading', { name: 'This item can’t be returned' })).toBeVisible();
   await expect(page.getByText('The return window closed on August 30.').first()).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Approve return' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Approve and send return' })).toHaveCount(0);
 });
 
 test('the Lab drives the scenario through MCP and introduces conflicts', async ({ page }) => {
@@ -135,7 +135,7 @@ test('pages have no serious accessibility violations', async ({ page }) => {
   }
   await startFlagship(page);
   await giveSerial(page, 'HA-7Q2-4471');
-  await expect(page.getByRole('button', { name: 'Approve return' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Approve and send return' })).toBeVisible();
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(
     results.violations
@@ -149,7 +149,7 @@ test('pages have no serious accessibility violations', async ({ page }) => {
 test('keyboard users can approve with visible focus', async ({ page }) => {
   await startFlagship(page);
   await giveSerial(page, 'HA-7Q2-4471');
-  const approve = page.getByRole('button', { name: 'Approve return' });
+  const approve = page.getByRole('button', { name: 'Approve and send return' });
   await expect(approve).toBeVisible();
   // Reach the button with the keyboard alone.
   let reached = false;
@@ -166,18 +166,34 @@ test('keyboard users can approve with visible focus', async ({ page }) => {
   ).toHaveText('CONFIRMED', { timeout: 20_000 });
 });
 
+/** Elements that extend past the visible width, named so a failure says what to fix. */
+async function wideElements(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    const limit = document.documentElement.clientWidth;
+    if (document.documentElement.scrollWidth <= limit) return [];
+    return [...document.querySelectorAll('body *')]
+      .filter((el) => el.getBoundingClientRect().right > limit + 0.5)
+      .slice(0, 8)
+      .map((el) => {
+        const right = Math.round(el.getBoundingClientRect().right);
+        const name = `${el.tagName.toLowerCase()}.${String(el.className).split(' ')[0]}`;
+        return `${name} right=${right} limit=${limit}`;
+      });
+  });
+}
+
 test('works on a phone-sized screen without sideways scrolling', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
+  // Always render the voice button, whatever the browser supports, so the widest layout is tested.
+  await page.addInitScript(() => {
+    (window as unknown as { webkitSpeechRecognition: unknown }).webkitSpeechRecognition = class {};
+  });
   await startFlagship(page);
-  const overflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - window.innerWidth,
-  );
-  expect(overflow).toBeLessThanOrEqual(0);
+  await expect(page.getByRole('button', { name: 'Speak', exact: true })).toBeVisible();
+  expect(await wideElements(page), 'assistant at phone width').toEqual([]);
   await page.goto('/lab');
-  const labOverflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - window.innerWidth,
-  );
-  expect(labOverflow).toBeLessThanOrEqual(0);
+  await expect(page.getByRole('heading', { name: 'Resolution Lab' })).toBeVisible();
+  expect(await wideElements(page), 'lab at phone width').toEqual([]);
 });
 
 test.describe('process restart', () => {
@@ -211,7 +227,8 @@ test.describe('process restart', () => {
   async function stopServer(): Promise<void> {
     if (!child) return;
     const exited = new Promise((r) => child?.once('exit', r));
-    child.kill();
+    // A hard kill, like a crash: nothing gets a chance to clean up.
+    child.kill('SIGKILL');
     await exited;
     child = null;
   }
@@ -232,7 +249,7 @@ test.describe('process restart', () => {
     await page.goto(base);
     await page.getByRole('button', { name: new RegExp('keep disconnecting') }).click();
     await giveSerial(page, 'HA-7Q2-4471');
-    await expect(page.getByRole('button', { name: 'Approve return' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Approve and send return' })).toBeVisible();
     const url = page.url();
     const before = await (
       await page.request.get(`${base}/api/cases/${url.split('/').pop()}`)
@@ -242,7 +259,7 @@ test.describe('process restart', () => {
     await startServer();
 
     await page.goto(url);
-    await expect(page.getByRole('button', { name: 'Approve return' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Approve and send return' })).toBeVisible();
     const after = await (
       await page.request.get(`${base}/api/cases/${url.split('/').pop()}`)
     ).json();

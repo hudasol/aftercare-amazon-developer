@@ -63,6 +63,7 @@ export const BlockerSchema = z.object({
     'policy_ambiguous',
     'no_policy_in_effect',
     'retailer_rejected',
+    'outcome_mismatch',
     'retry_limit_reached',
     'existing_return',
     'nothing_to_return',

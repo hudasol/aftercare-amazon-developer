@@ -210,9 +210,11 @@ describe('execution safety', () => {
     const refused = await app.service.execute({ ...ctx, caseId: view.case.id, proposalId: p.id });
     expect(refused.case.state).toBe('needs_review');
     expect(refused.lifecycle.stage).toBe('refused');
+    const requests = app.sandbox.requestLog().length;
     await expect(
       app.service.execute({ ...ctx, caseId: view.case.id, proposalId: p.id }),
-    ).rejects.toBeTruthy();
+    ).rejects.toMatchObject({ code: 'proposal_not_current' });
+    expect(app.sandbox.requestLog()).toHaveLength(requests);
     expect(app.sandbox.listReturns()).toHaveLength(0);
   });
 
@@ -269,9 +271,20 @@ describe('execution safety', () => {
     });
     expect(changed.proposals.find((p) => p.id === old.id)?.status).toBe('superseded');
     expect(changed.case.state).toBe('awaiting_approval');
+    const requests = app.sandbox.requestLog().length;
     await expect(
       app.service.execute({ ...ctx, caseId: view.case.id, proposalId: old.id }),
-    ).rejects.toBeTruthy();
+    ).rejects.toMatchObject({ code: 'proposal_not_current' });
+    await expect(
+      app.service.approve({
+        ...ctx,
+        caseId: view.case.id,
+        proposalId: old.id,
+        digest: old.digest,
+        statement: 'ok',
+      }),
+    ).rejects.toMatchObject({ code: 'proposal_not_current' });
+    expect(app.sandbox.requestLog()).toHaveLength(requests);
     expect(liveProposal(changed).parameters.returnShipping).toBe('customer_paid');
   });
 });
@@ -323,5 +336,82 @@ describe('access, conflicts and reset', () => {
     expect(app.sandbox.listQueue()).toEqual([
       { operation: 'create_return', outcome: 'timeout_after_commit', note: expect.any(String) },
     ]);
+  });
+});
+
+describe('outcomes that are neither success nor refusal', () => {
+  it('reports a return on different terms as a mismatch, never as refused or confirmed', async () => {
+    const view = await approved();
+    app.demo.scriptNextSubmission('accept_with_fee', view.case.id);
+    const p = liveProposal(view);
+    const submitted = await app.service.execute({ ...ctx, caseId: view.case.id, proposalId: p.id });
+    expect(submitted.lifecycle.stage).toBe('submitted');
+    const checked = await app.service.checkOutcome({ ...ctx, caseId: view.case.id });
+    expect(checked.operations[0]?.status).toBe('mismatch');
+    expect(checked.lifecycle.stage).toBe('mismatch');
+    expect(checked.case.state).toBe('needs_review');
+    expect(checked.assessment?.blockers.map((b) => b.code)).toContain('outcome_mismatch');
+    expect(checked.messages.at(-1)?.text).toMatch(/doesn’t match what you approved/);
+    expect(checked.messages.at(-1)?.text).not.toMatch(/declined/);
+    await expect(
+      app.service.execute({ ...ctx, caseId: view.case.id, proposalId: p.id }),
+    ).rejects.toMatchObject({ code: 'duplicate_operation' });
+    expect(app.sandbox.listReturns()).toHaveLength(1);
+  });
+
+  it('keeps an outcome unknown when the lookup itself times out', async () => {
+    const view = await approved();
+    const p = liveProposal(view);
+    await app.service.execute({ ...ctx, caseId: view.case.id, proposalId: p.id }); // seeded: timeout after commit
+    app.sandbox.queueOutcome('lookup', 'timeout', null);
+    const inconclusive = await app.service.checkOutcome({ ...ctx, caseId: view.case.id });
+    expect(inconclusive.operations[0]?.status).toBe('outcome_unknown');
+    expect(inconclusive.case.state).toBe('needs_reconciliation');
+    expect(inconclusive.events.some((e) => e.type === 'reconciliation.inconclusive')).toBe(true);
+    await expect(
+      app.service.execute({ ...ctx, caseId: view.case.id, proposalId: p.id }),
+    ).rejects.toMatchObject({ code: 'reconciliation_required' });
+  });
+
+  it('serializes concurrent submissions so only one reaches the retailer', async () => {
+    const view = await approved();
+    app.demo.scriptNextSubmission('accept', view.case.id);
+    const p = liveProposal(view);
+    const results = await Promise.allSettled([
+      app.service.execute({ ...ctx, caseId: view.case.id, proposalId: p.id }),
+      app.service.execute({ ...ctx, caseId: view.case.id, proposalId: p.id }),
+    ]);
+    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+    expect(results.find((r) => r.status === 'rejected')).toMatchObject({
+      reason: { code: 'duplicate_operation' },
+    });
+    expect(app.sandbox.requestLog().filter((r) => r.operation === 'create_return')).toHaveLength(1);
+  });
+});
+
+describe('declining and cancelling', () => {
+  it('closes the case when the customer declines, and nothing is submitted', async () => {
+    const view = await toApproval();
+    const p = liveProposal(view);
+    const declined = await app.service.decline({ ...ctx, caseId: view.case.id, proposalId: p.id });
+    expect(declined.case.state).toBe('closed');
+    expect(declined.proposals[0]?.status).toBe('declined');
+    expect(app.sandbox.requestLog().some((r) => r.operation === 'create_return')).toBe(false);
+  });
+
+  it('closes on an explicit request, but not when the customer describes a fault', async () => {
+    const view = await toApproval();
+    const fault = await app.service.sendMessage({
+      ...ctx,
+      caseId: view.case.id,
+      utterance: 'They just stop working after a few minutes.',
+    });
+    expect(fault.case.state).toBe('awaiting_approval');
+    const closed = await app.service.sendMessage({
+      ...ctx,
+      caseId: view.case.id,
+      utterance: 'Never mind, please cancel my return.',
+    });
+    expect(closed.case.state).toBe('closed');
   });
 });

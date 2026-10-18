@@ -2,7 +2,12 @@
  * Read models returned by the HTTP API and MCP tools. Everything here is
  * derived from persisted records; nothing is computed in the UI.
  */
-import type { Approval, Operation, Proposal } from '../domain/actions.js';
+import {
+  BLOCKING_OPERATION_STATUSES,
+  type Approval,
+  type Operation,
+  type Proposal,
+} from '../domain/actions.js';
 import type { Assessment } from '../domain/assessment.js';
 import type { CaseRecord, CaseState } from '../domain/case.js';
 import type { Evidence } from '../domain/evidence.js';
@@ -32,7 +37,8 @@ export type LifecycleStage =
   | 'outcome_unknown'
   | 'confirmed'
   | 'failed'
-  | 'refused';
+  | 'refused'
+  | 'mismatch';
 
 export interface ActionLifecycle {
   stage: LifecycleStage;
@@ -52,6 +58,7 @@ const STAGE_LABELS: Record<LifecycleStage, string> = {
   confirmed: 'Confirmed',
   failed: 'Not executed',
   refused: 'Refused by retailer',
+  mismatch: 'Does not match approval',
 };
 
 export function deriveLifecycle(
@@ -59,7 +66,8 @@ export function deriveLifecycle(
   proposals: readonly Proposal[],
   operations: readonly Operation[],
 ): ActionLifecycle {
-  const latestOp = [...operations].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))[0];
+  // Repository order is creation order, so the last operation is the newest.
+  const latestOp = operations.at(-1);
   const live = [...proposals]
     .reverse()
     .find((p) => p.status === 'prepared' || p.status === 'approved');
@@ -75,7 +83,15 @@ export function deriveLifecycle(
     operationId: o?.id ?? null,
     detail,
   });
-  if (latestOp) {
+  // An operation decides the stage while it is in flight or unresolved, or when it
+  // belongs to the live proposal. A finished operation for an older proposal does
+  // not hide a newer proposal waiting for approval.
+  const opDecides =
+    latestOp !== undefined &&
+    (BLOCKING_OPERATION_STATUSES.includes(latestOp.status) ||
+      !live ||
+      live.id === latestOp.proposalId);
+  if (latestOp && opDecides) {
     switch (latestOp.status) {
       case 'confirmed':
         return make(
@@ -89,6 +105,13 @@ export function deriveLifecycle(
       case 'submitting':
       case 'outcome_unknown':
         return make('outcome_unknown', 'May or may not have reached the retailer.', null, latestOp);
+      case 'mismatch':
+        return make(
+          'mismatch',
+          latestOp.lastError ?? 'A return exists but does not match what was approved.',
+          null,
+          latestOp,
+        );
       case 'rejected':
         return make('refused', latestOp.lastError ?? 'Refused by the retailer.', null, latestOp);
       case 'failed':
@@ -100,7 +123,7 @@ export function deriveLifecycle(
             latestOp,
           );
         }
-        return make('failed', latestOp.lastError ?? 'Not executed.', null, latestOp);
+        if (!live) return make('failed', latestOp.lastError ?? 'Not executed.', null, latestOp);
     }
   }
   if (live?.status === 'approved')
@@ -165,7 +188,7 @@ export function deriveJourney(
         assessment?.missing[0]?.label ?? 'Waiting for you',
       );
     }
-    if (s === 'needs_review' && !['refused', 'failed'].includes(lifecycle.stage)) {
+    if (s === 'needs_review' && !['refused', 'failed', 'mismatch'].includes(lifecycle.stage)) {
       return stage(
         'clear',
         'Clear blockers',
@@ -181,7 +204,7 @@ export function deriveJourney(
   })();
 
   const approve: JourneyStage =
-    past(afterApproval) || lifecycle.stage === 'refused'
+    past(afterApproval) || lifecycle.stage === 'refused' || lifecycle.stage === 'mismatch'
       ? stage('approve', 'Your approval', 'done', 'Approved')
       : s === 'awaiting_approval'
         ? stage('approve', 'Your approval', 'waiting_on_customer', 'Waiting for you')
@@ -194,25 +217,29 @@ export function deriveJourney(
       ? stage('submit', 'Submitted', 'unknown', 'Outcome unknown')
       : lifecycle.stage === 'refused'
         ? stage('submit', 'Submitted', 'stopped', 'Refused by retailer')
-        : lifecycle.stage === 'submitted' || lifecycle.stage === 'confirmed'
-          ? stage('submit', 'Submitted', 'done', 'Accepted by retailer')
-          : s === 'ready_to_submit' || s === 'executing'
-            ? stage(
-                'submit',
-                'Submitted',
-                'current',
-                lifecycle.stage === 'approved' && lifecycle.operationId
-                  ? 'Retry pending'
-                  : 'Sending',
-              )
-            : stage('submit', 'Submitted', 'upcoming');
+        : lifecycle.stage === 'mismatch'
+          ? stage('submit', 'Submitted', 'done', 'A return exists')
+          : lifecycle.stage === 'submitted' || lifecycle.stage === 'confirmed'
+            ? stage('submit', 'Submitted', 'done', 'Accepted by retailer')
+            : s === 'ready_to_submit' || s === 'executing'
+              ? stage(
+                  'submit',
+                  'Submitted',
+                  'current',
+                  lifecycle.stage === 'approved' && lifecycle.operationId
+                    ? 'Retry pending'
+                    : 'Sending',
+                )
+              : stage('submit', 'Submitted', 'upcoming');
 
   const confirm: JourneyStage =
     lifecycle.stage === 'confirmed'
       ? stage('confirm', 'Confirmed', 'done', 'Verified with retailer')
-      : lifecycle.stage === 'submitted'
-        ? stage('confirm', 'Confirmed', 'current', 'Checking')
-        : stage('confirm', 'Confirmed', 'upcoming');
+      : lifecycle.stage === 'mismatch'
+        ? stage('confirm', 'Confirmed', 'stopped', 'Does not match approval')
+        : lifecycle.stage === 'submitted'
+          ? stage('confirm', 'Confirmed', 'current', 'Checking')
+          : stage('confirm', 'Confirmed', 'upcoming');
 
   return [
     stage('understand', 'Understand', hasStatement ? 'done' : 'current', record.title),

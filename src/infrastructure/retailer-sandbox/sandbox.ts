@@ -35,6 +35,8 @@ export const SubmissionOutcomeSchema = z.enum([
   'unavailable',
   'timeout_after_commit',
   'timeout_before_commit',
+  /** Creates the return but deducts a restocking fee the customer never agreed to. */
+  'accept_with_fee',
 ]);
 export type SubmissionOutcome = z.infer<typeof SubmissionOutcomeSchema>;
 
@@ -86,6 +88,8 @@ export interface SandboxOptions {
 }
 
 type Row = Record<string, SQLInputValue>;
+
+const RESTOCKING_FEE_CENTS = 1500;
 
 const STOPWORDS = new Set([
   'my',
@@ -224,6 +228,21 @@ export class RetailerSandbox implements RetailerGateway {
         detail: r['detail'] === null ? null : String(r['detail']),
       }),
     );
+  }
+
+  /**
+   * Let the retailer finish processing: every return still 'processing' becomes
+   * 'authorized'. Used by the evaluation harness so final records are judged in
+   * their settled state, whether or not an agent ever read them back.
+   */
+  settle(): void {
+    for (const r of this.listReturns().filter((x) => x.status === 'processing')) {
+      const label =
+        r.returnShipping === 'prepaid_label' ? `demo://kestrel-goods/labels/${r.rmaId}.pdf` : null;
+      this.db.sql
+        .prepare("UPDATE sim_returns SET status = 'authorized', label_url = ? WHERE rma_id = ?")
+        .run(label, r.rmaId);
+    }
   }
 
   /** Every return the retailer holds (for the Lab's "retailer truth" view and for evaluation). */
@@ -395,6 +414,7 @@ export class RetailerSandbox implements RetailerGateway {
 
   private commitReturn(
     request: ReturnRequest,
+    feeCents = 0,
   ): { rma: RetailerReturn; created: boolean } | { refusal: string } {
     return this.db.transaction(() => {
       const existing = this.returnByKey(request.idempotencyKey);
@@ -431,7 +451,7 @@ export class RetailerSandbox implements RetailerGateway {
           request.orderId,
           request.lineId,
           request.reason,
-          request.refundAmountCents,
+          request.refundAmountCents - feeCents,
           request.currency,
           request.returnShipping,
           this.options.clock.now(),
@@ -473,7 +493,10 @@ export class RetailerSandbox implements RetailerGateway {
       return { kind: 'rejected', reason };
     }
 
-    const committed = this.commitReturn(request);
+    const committed = this.commitReturn(
+      request,
+      outcome === 'accept_with_fee' ? RESTOCKING_FEE_CENTS : 0,
+    );
     if ('refusal' in committed) {
       this.log('create_return', request.idempotencyKey, 'rejected', committed.refusal);
       return { kind: 'rejected', reason: committed.refusal };
@@ -492,7 +515,9 @@ export class RetailerSandbox implements RetailerGateway {
       'create_return',
       request.idempotencyKey,
       committed.created ? 'created' : 'replayed',
-      committed.rma.rmaId,
+      outcome === 'accept_with_fee'
+        ? `${committed.rma.rmaId} with a restocking fee deducted`
+        : committed.rma.rmaId,
     );
     return { kind: 'accepted', rma: committed.rma };
   }

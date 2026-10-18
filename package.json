@@ -10,12 +10,12 @@
   },
   "scripts": {
     "dev": "node scripts/dev.mjs",
-    "dev:server": "tsx watch src/main.ts",
+    "dev:server": "tsx watch --env-file-if-exists=.env src/main.ts",
     "dev:web": "vite --config web/vite.config.ts",
     "build": "npm run build:web",
     "build:web": "vite build --config web/vite.config.ts",
-    "start": "tsx src/main.ts",
-    "db:reset": "tsx src/cli/reset-demo.ts",
+    "start": "node --env-file-if-exists=.env --import tsx src/main.ts",
+    "db:reset": "node --env-file-if-exists=.env --import tsx src/cli/reset-demo.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p web/tsconfig.json --noEmit && tsc -p e2e/tsconfig.json --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",
@@ -23,13 +23,14 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "eval": "tsx src/cli/run-evaluation.ts",
-    "mcp:smoke": "tsx src/cli/mcp-smoke.ts",
+    "eval": "node --import tsx src/cli/run-evaluation.ts",
+    "mcp:smoke": "node --env-file-if-exists=.env --import tsx src/cli/mcp-smoke.ts",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm test"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.1",
     "express": "^5.3.0",
+    "tsx": "^4.23.15",
     "zod": "^4.6.7"
   },
   "devDependencies": {
@@ -48,7 +49,6 @@
     "prettier": "^3.9.10",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.2",
     "vite": "^8.3.4",

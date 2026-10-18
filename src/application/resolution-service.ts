@@ -8,7 +8,12 @@
  * compiler calls for, records them with provenance, and moves the case only
  * through legal transitions.
  */
-import { MAX_SUBMISSION_ATTEMPTS, type Operation, type Proposal } from '../domain/actions.js';
+import {
+  BLOCKING_OPERATION_STATUSES,
+  MAX_SUBMISSION_ATTEMPTS,
+  type Operation,
+  type Proposal,
+} from '../domain/actions.js';
 import type { Assessment } from '../domain/assessment.js';
 import { assertTransition, isTerminal, type CaseRecord, type CaseState } from '../domain/case.js';
 import { compileCase } from '../domain/compiler.js';
@@ -573,6 +578,8 @@ export class ResolutionService {
       caseId: string;
       sourceName: string;
       url: string;
+      /** The policy the page makes claims about. */
+      policyId: string;
       windowDays: number;
       excerpt: string;
     },
@@ -586,7 +593,7 @@ export class ResolutionService {
           thirdPartyClaimEvidence(this.meta(record.id), {
             sourceName: input.sourceName,
             url: input.url,
-            policyId: 'kestrel-returns',
+            policyId: input.policyId,
             windowDays: input.windowDays,
             excerpt: input.excerpt,
           }),
@@ -741,10 +748,7 @@ export class ResolutionService {
           'A previous submission has an unknown outcome. Check it before submitting again.',
         );
       }
-      if (
-        existing &&
-        ['submitting', 'accepted', 'confirmed', 'outcome_unknown'].includes(existing.status)
-      ) {
+      if (existing && BLOCKING_OPERATION_STATUSES.includes(existing.status)) {
         this.repo.transaction(() =>
           this.event(
             record.id,
@@ -1000,13 +1004,19 @@ export class ResolutionService {
               type = 'verification.refused';
               summary = `The retailer refused ${rma.rmaId}: ${verdict.reason}`;
             } else {
+              const differences = verdict.checks
+                .filter(
+                  (c) =>
+                    !c.passed && ['rma_exists', 'refund_amount', 'shipping_terms'].includes(c.id),
+                )
+                .map((c) => `${c.description} (found ${c.observed})`);
               update = {
-                status: 'rejected',
+                status: 'mismatch',
                 observed,
-                lastError: 'The retailer’s record does not match the approved return.',
+                lastError: `The retailer’s return does not match the approval: ${differences.join('; ')}.`,
               };
               type = 'verification.mismatch';
-              summary = `${rma.rmaId} does not match the approved return.`;
+              summary = `${rma.rmaId} exists but does not match the approved return: ${differences.join('; ')}.`;
             }
           }
         } catch (error) {
@@ -1033,18 +1043,6 @@ export class ResolutionService {
         });
       });
       await this.advance(record.id);
-      return this.getCase(record.id, input.customerRef);
-    });
-  }
-
-  async closeCase(input: Actor & { caseId: string }): Promise<CaseView> {
-    return this.withLock(input.caseId, async () => {
-      const record = this.loadOwned(input.caseId, input.customerRef);
-      this.repo.transaction(() => {
-        this.declineLiveProposals(record.id, 'Customer closed the case.');
-        this.moveTo(record, 'closed', 'Customer closed the case.');
-        this.say(record.id, 'I’ve closed this case. Nothing further will be submitted.', null);
-      });
       return this.getCase(record.id, input.customerRef);
     });
   }

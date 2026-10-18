@@ -470,6 +470,7 @@ a {
 }
 
 .conversation {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - 140px);
@@ -567,6 +568,8 @@ a {
 
 .composer textarea {
   flex: 1;
+  min-width: 0;
+  width: 100%;
   border: 0;
   resize: none;
   padding: var(--s2) var(--s3);
@@ -670,6 +673,7 @@ a {
 /* ---- side panel ---------------------------------------------------------- */
 
 .side {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: var(--s4);
@@ -1403,7 +1407,7 @@ a {
 
 .lc-side {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--s2);
   margin-top: var(--s2);
 }
@@ -1425,7 +1429,8 @@ a {
   color: var(--violet);
 }
 
-.lc-node[data-node='refused'][data-current='true'] {
+.lc-node[data-node='refused'][data-current='true'],
+.lc-node[data-node='mismatch'][data-current='true'] {
   background: var(--brick-tint);
   border-color: var(--brick);
   color: var(--brick);

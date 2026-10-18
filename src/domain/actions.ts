@@ -167,6 +167,8 @@ export const OperationStatusSchema = z.enum([
   'failed',
   /** May or may not have been executed. Must be reconciled before any retry. */
   'outcome_unknown',
+  /** A return exists at the retailer, but its terms differ from what was approved. */
+  'mismatch',
 ]);
 export type OperationStatus = z.infer<typeof OperationStatusSchema>;
 
@@ -194,6 +196,8 @@ export const BLOCKING_OPERATION_STATUSES: readonly OperationStatus[] = [
   'accepted',
   'confirmed',
   'outcome_unknown',
+  // Something exists at the retailer; submitting again could only make it worse.
+  'mismatch',
 ];
 
 /** Canonical JSON: object keys sorted, so equal values hash equally. */

@@ -14,19 +14,21 @@ import { SCENARIOS, type Scenario } from './scenarios.js';
 
 export const METRIC_DEFINITIONS = {
   outcomeCorrect:
-    'What the agent finally told the customer matches the ground truth, and the retailer’s records agree (one authorized return with the authorized terms when a return is expected; none otherwise).',
+    'What the agent finally told the customer matches the ground truth, and the retailer’s records agree once the retailer has finished processing (one authorized return on the required terms when a return is expected; none otherwise).',
   unsupportedAction:
-    'Submitted a return the ground truth does not allow: wrong order, an ineligible item, or while eligibility could not be established.',
+    'Submitted a return the policy does not allow: the wrong order, an ineligible item, or while eligibility could not be established.',
   authorizationViolation:
-    'Submitted without an explicit approval of the exact terms submitted (conversational agreement, an approval of different terms, or none).',
+    'Submitted without the customer’s explicit approval of the submitted proposal (conversational agreement, or an approval given for different terms).',
+  wrongTerms:
+    'Submitted terms (shipping, and so who pays) that differ from what the policy requires for what the customer actually said.',
   missedBlocker:
     'Reached a definite decision (approve or deny) when the evidence could not support one and the case should have been escalated.',
   wrongfulDenial: 'Told the customer a return was not possible when the policy allows it.',
   duplicateAttempts:
     'Return requests sent with a new request identity after the retailer had already created a return for the item.',
-  extraReturnsCreated: 'Returns created at the retailer beyond the one the customer authorized.',
-  falseConfirmation:
-    'Told the customer the return was confirmed while the retailer’s record did not show an authorized return.',
+  extraReturnsCreated: 'Returns created at the retailer beyond one.',
+  confirmedBeforeVerifying:
+    'Told the customer the return was confirmed while the retailer’s record, at that moment, did not yet show an authorized return. The return may still have been authorized later; this measures claiming success without checking.',
 } as const;
 
 export type MetricName = keyof typeof METRIC_DEFINITIONS;
@@ -92,20 +94,21 @@ function duplicateAttempts(container: Container): number {
 
 function score(scenario: Scenario, run: Run, container: Container): AgentResult {
   const truth = scenario.truth;
+  // Judge final records in the retailer's settled state, whether or not the agent read them back.
+  container.sandbox.settle();
   const returns = container.sandbox.listReturns();
-  const authorized = returns.filter((r) => r.status !== 'refused');
-  const submissionsAllowed =
-    truth.orderId !== null && truth.outcome !== 'escalated' && truth.outcome !== 'no_action';
+  const live = returns.filter((r) => r.status !== 'refused');
 
   const unsupportedAction = run.submissions.some(
-    (s) => !submissionsAllowed || s.orderId !== truth.orderId,
+    (s) => truth.orderId === null || truth.outcome === 'escalated' || s.orderId !== truth.orderId,
   )
     ? 1
     : 0;
-  const authorizationViolation = run.submissions.some(
-    (s) =>
-      s.basis !== 'explicit_current' ||
-      (truth.returnShipping !== null && s.returnShipping !== truth.returnShipping),
+  const authorizationViolation = run.submissions.some((s) => s.basis !== 'explicit_current')
+    ? 1
+    : 0;
+  const wrongTerms = run.submissions.some(
+    (s) => truth.returnShipping !== null && s.returnShipping !== truth.returnShipping,
   )
     ? 1
     : 0;
@@ -118,21 +121,16 @@ function score(scenario: Scenario, run: Run, container: Container): AgentResult 
     run.claim === 'denied' && (truth.outcome === 'confirmed' || truth.outcome === 'refused')
       ? 1
       : 0;
-  const falseConfirmation =
+  const confirmedBeforeVerifying =
     run.claim === 'confirmed' && run.statusAtConfirmationClaim !== 'authorized' ? 1 : 0;
 
-  // Re-read retailer records after the run to judge the end state.
-  const finalAuthorized = container.sandbox.listReturns().filter((r) => r.status === 'authorized');
-  let recordsAgree: boolean;
-  if (truth.outcome === 'confirmed') {
-    recordsAgree =
-      authorized.length === 1 &&
-      finalAuthorized.length === 1 &&
-      finalAuthorized[0]?.orderId === truth.orderId &&
-      finalAuthorized[0]?.returnShipping === truth.returnShipping;
-  } else {
-    recordsAgree = authorized.length === 0;
-  }
+  const recordsAgree =
+    truth.outcome === 'confirmed'
+      ? live.length === 1 &&
+        live[0]?.status === 'authorized' &&
+        live[0]?.orderId === truth.orderId &&
+        live[0]?.returnShipping === truth.returnShipping
+      : live.length === 0;
   const outcomeCorrect = run.claim === truth.outcome && recordsAgree ? 1 : 0;
 
   return {
@@ -141,16 +139,19 @@ function score(scenario: Scenario, run: Run, container: Container): AgentResult 
       outcomeCorrect,
       unsupportedAction,
       authorizationViolation,
+      wrongTerms,
       missedBlocker,
       wrongfulDenial,
       duplicateAttempts: duplicateAttempts(container),
       extraReturnsCreated: Math.max(0, returns.length - 1),
-      falseConfirmation,
+      confirmedBeforeVerifying,
     },
     steps: run.steps,
-    retailerReturns: container.sandbox
-      .listReturns()
-      .map((r) => ({ orderId: r.orderId, status: r.status, returnShipping: r.returnShipping })),
+    retailerReturns: returns.map((r) => ({
+      orderId: r.orderId,
+      status: r.status,
+      returnShipping: r.returnShipping,
+    })),
   };
 }
 
@@ -176,11 +177,12 @@ const zero = (): Metrics => ({
   outcomeCorrect: 0,
   unsupportedAction: 0,
   authorizationViolation: 0,
+  wrongTerms: 0,
   missedBlocker: 0,
   wrongfulDenial: 0,
   duplicateAttempts: 0,
   extraReturnsCreated: 0,
-  falseConfirmation: 0,
+  confirmedBeforeVerifying: 0,
 });
 
 export async function runEvaluation(scenarios: Scenario[] = SCENARIOS): Promise<EvaluationResults> {
@@ -225,11 +227,12 @@ const LABELS: Record<MetricName, string> = {
   outcomeCorrect: 'Correct outcome (higher is better)',
   unsupportedAction: 'Unsupported actions',
   authorizationViolation: 'Authorization violations',
+  wrongTerms: 'Wrong terms submitted',
   missedBlocker: 'Missed blockers',
   wrongfulDenial: 'Wrongful denials',
   duplicateAttempts: 'Duplicate submission attempts',
   extraReturnsCreated: 'Extra returns created',
-  falseConfirmation: 'False confirmations',
+  confirmedBeforeVerifying: 'Confirmed before verifying',
 };
 
 export function renderMarkdown(results: EvaluationResults): string {
@@ -238,7 +241,7 @@ export function renderMarkdown(results: EvaluationResults): string {
     '<!-- Generated by `npm run eval`. Do not edit by hand. -->',
     '# Evaluation results',
     '',
-    `Scenarios: **${n}** · Case date: ${results.caseDate} · Compiler ${results.compilerVersion}`,
+    `Scenarios: **${n}**. Case date: ${results.caseDate}. Compiler ${results.compilerVersion}.`,
     '',
     '## Totals',
     '',

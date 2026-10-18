@@ -26,7 +26,7 @@ test('capture the Return Rescue journey', async ({ page }) => {
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await page.screenshot({ path: `${dir}/03-proposal-slip.png` });
 
-  await page.getByRole('button', { name: 'Approve return' }).click();
+  await page.getByRole('button', { name: 'Approve and send return' }).click();
   await expect(slip.locator('.slip-stamp')).toHaveText('OUTCOME UNKNOWN', { timeout: 15_000 });
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await page.screenshot({ path: `${dir}/04-outcome-unknown.png` });

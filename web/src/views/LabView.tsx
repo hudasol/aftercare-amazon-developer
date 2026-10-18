@@ -93,6 +93,7 @@ export function LabView({ caseId, session }: { caseId: string | null; session: S
   const [view, setView] = useState<CaseView | null>(null);
   const [sandbox, setSandbox] = useState<SandboxState | null>(null);
   const [evaluation, setEvaluation] = useState<EvaluationResults | null>(null);
+  const [evaluationError, setEvaluationError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [highlight, setHighlight] = useState<string[]>([]);
@@ -120,8 +121,15 @@ export function LabView({ caseId, session }: { caseId: string | null; session: S
       .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Could not load the Lab.'));
     api
       .evaluation()
-      .then((r) => setEvaluation(r.results ?? null))
-      .catch(() => undefined);
+      .then((r) => {
+        setEvaluation(r.results ?? null);
+        if (!r.available) setEvaluationError('No evaluation results yet. Run npm run eval.');
+      })
+      .catch((e: unknown) =>
+        setEvaluationError(
+          e instanceof Error ? e.message : 'Evaluation results could not be loaded.',
+        ),
+      );
   }, [fetchAll, apply]);
 
   // Follow changes made elsewhere (for example the assistant surface in another window).
@@ -349,7 +357,15 @@ export function LabView({ caseId, session }: { caseId: string | null; session: S
         </section>
       )}
 
-      {evaluation && <Comparison results={evaluation} />}
+      {evaluation ? (
+        <Comparison results={evaluation} />
+      ) : (
+        evaluationError && (
+          <section className="panel" aria-label="Measured comparison">
+            <p className="empty">{evaluationError}</p>
+          </section>
+        )
+      )}
     </main>
   );
 }
@@ -759,6 +775,7 @@ const SIDE_NODES = [
     label: 'Refused',
     events: ['operation.rejected', 'verification.refused', 'reconciliation.refused'],
   },
+  { id: 'mismatch', label: 'Does not match', events: ['verification.mismatch'] },
 ];
 
 function LifecyclePanel({ view }: { view: CaseView }) {
@@ -960,13 +977,14 @@ const METRICS: {
   better: 'higher' | 'lower';
 }[] = [
   { key: 'outcomeCorrect', label: 'Correct outcome', better: 'higher' },
-  { key: 'falseConfirmation', label: 'False confirmations', better: 'lower' },
-  { key: 'authorizationViolation', label: 'Authorization violations', better: 'lower' },
-  { key: 'unsupportedAction', label: 'Unsupported actions', better: 'lower' },
-  { key: 'missedBlocker', label: 'Missed blockers', better: 'lower' },
   { key: 'wrongfulDenial', label: 'Wrongful denials', better: 'lower' },
+  { key: 'missedBlocker', label: 'Missed blockers', better: 'lower' },
+  { key: 'authorizationViolation', label: 'Authorization violations', better: 'lower' },
+  { key: 'wrongTerms', label: 'Wrong terms submitted', better: 'lower' },
+  { key: 'unsupportedAction', label: 'Unsupported actions', better: 'lower' },
   { key: 'duplicateAttempts', label: 'Duplicate submission attempts', better: 'lower' },
   { key: 'extraReturnsCreated', label: 'Extra returns created', better: 'lower' },
+  { key: 'confirmedBeforeVerifying', label: 'Confirmed before verifying', better: 'lower' },
 ];
 
 function Comparison({ results }: { results: EvaluationResults }) {
@@ -975,9 +993,10 @@ function Comparison({ results }: { results: EvaluationResults }) {
     <section className="panel" aria-label="Measured comparison">
       <h2>Measured: AFTERCARE against a baseline, {n} scenarios</h2>
       <p className="fine" style={{ marginBottom: 16, maxWidth: '90ch' }}>
-        Produced by <code>npm run eval</code> from this repository, with hand-labelled expected
-        outcomes. Counts are numbers of scenarios (duplicate attempts and extra returns count
-        events). {results.baselineDefinition}
+        Produced by <code>npm run eval</code> from this repository: {n} synthetic scenarios on the
+        fictional retailer, with hand-labelled expected outcomes. These are behaviour tests, not
+        statistical estimates. Counts are numbers of scenarios (duplicate attempts and extra returns
+        count events). {results.baselineDefinition}
       </p>
       <div className="comparison">
         <div>

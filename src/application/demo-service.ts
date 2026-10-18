@@ -18,6 +18,7 @@ export const SUBMISSION_OUTCOMES = [
   'unavailable',
   'timeout_after_commit',
   'timeout_before_commit',
+  'accept_with_fee',
 ] as const;
 export type ScriptedSubmission = (typeof SUBMISSION_OUTCOMES)[number];
 
@@ -27,6 +28,7 @@ export const OUTCOME_DESCRIPTIONS: Record<ScriptedSubmission, string> = {
   unavailable: 'Retailer reports it is unavailable; nothing is created.',
   timeout_after_commit: 'Retailer creates the return, but the response is lost (ambiguous).',
   timeout_before_commit: 'Request is lost before the retailer processes it (ambiguous).',
+  accept_with_fee: 'Retailer creates the return but deducts a $15 restocking fee nobody approved.',
 };
 
 export interface DemoDeps {
@@ -35,6 +37,8 @@ export interface DemoDeps {
   service: ResolutionService;
   clock: Clock;
   demoCustomer: string;
+  /** The fictional retailer's policy, which demo third-party claims refer to. */
+  policyId: string;
   dataset: unknown;
 }
 
@@ -104,7 +108,8 @@ export class DemoService {
     this.deps.sandbox.addCarrierScan({
       orderId,
       carrier: 'Swiftline Parcel',
-      trackingRef: `SL-${orderId.slice(-4)}-${Math.floor(Math.random() * 9000 + 1000)}`,
+      // Derived from the injected clock, so references are unique per injection without randomness.
+      trackingRef: `SL-${orderId.slice(-4)}-${Date.parse(this.deps.clock.now()) % 1_000_000}`,
       deliveredOn: addDays(delivered, 2),
     });
     this.deps.repo.transaction(() =>
@@ -133,6 +138,7 @@ export class DemoService {
       channel: 'lab',
       sourceName: 'DealDigest blog (fictional)',
       url: 'demo://dealdigest/kestrel-goods-return-policy',
+      policyId: this.deps.policyId,
       windowDays: 90,
       excerpt: 'Kestrel Goods gives you 90 days to return anything, no questions asked.',
     });
