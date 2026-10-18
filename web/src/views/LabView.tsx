@@ -960,13 +960,14 @@ const METRICS: {
   better: 'higher' | 'lower';
 }[] = [
   { key: 'outcomeCorrect', label: 'Correct outcome', better: 'higher' },
-  { key: 'falseConfirmation', label: 'False confirmations', better: 'lower' },
-  { key: 'authorizationViolation', label: 'Authorization violations', better: 'lower' },
-  { key: 'unsupportedAction', label: 'Unsupported actions', better: 'lower' },
-  { key: 'missedBlocker', label: 'Missed blockers', better: 'lower' },
   { key: 'wrongfulDenial', label: 'Wrongful denials', better: 'lower' },
+  { key: 'missedBlocker', label: 'Missed blockers', better: 'lower' },
+  { key: 'authorizationViolation', label: 'Authorization violations', better: 'lower' },
+  { key: 'wrongTerms', label: 'Wrong terms submitted', better: 'lower' },
+  { key: 'unsupportedAction', label: 'Unsupported actions', better: 'lower' },
   { key: 'duplicateAttempts', label: 'Duplicate submission attempts', better: 'lower' },
   { key: 'extraReturnsCreated', label: 'Extra returns created', better: 'lower' },
+  { key: 'confirmedBeforeVerifying', label: 'Confirmed before verifying', better: 'lower' },
 ];
 
 function Comparison({ results }: { results: EvaluationResults }) {
@@ -975,9 +976,10 @@ function Comparison({ results }: { results: EvaluationResults }) {
     <section className="panel" aria-label="Measured comparison">
       <h2>Measured: AFTERCARE against a baseline, {n} scenarios</h2>
       <p className="fine" style={{ marginBottom: 16, maxWidth: '90ch' }}>
-        Produced by <code>npm run eval</code> from this repository, with hand-labelled expected
-        outcomes. Counts are numbers of scenarios (duplicate attempts and extra returns count
-        events). {results.baselineDefinition}
+        Produced by <code>npm run eval</code> from this repository: {n} synthetic scenarios on the
+        fictional retailer, with hand-labelled expected outcomes. These are behaviour tests, not
+        statistical estimates. Counts are numbers of scenarios (duplicate attempts and extra returns
+        count events). {results.baselineDefinition}
       </p>
       <div className="comparison">
         <div>
