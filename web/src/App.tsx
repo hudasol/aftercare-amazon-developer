@@ -52,11 +52,8 @@ export function App() {
           <Mark />
           AFTERCARE
         </a>
-        <span
-          className="sim-note"
-          title="Hackathon demo. Not an Amazon product and not connected to Alexa."
-        >
-          Simulated Alexa+-style assistant surface, fictional data
+        <span className="sim-note">
+          Simulated Alexa+-style assistant. Not an Amazon product. Fictional data.
         </span>
         <nav className="nav" aria-label="Main">
           {link('assistant', 'Assistant')}
