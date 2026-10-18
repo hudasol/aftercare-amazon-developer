@@ -49,7 +49,7 @@ How AFTERCARE answers this:
 - Forum 45411 and forum 45493 (the newest reply, about 7 days before our check): the endpoint "needs to be live and accessible till the end of the judging period".
 - The judging period is given as Nov 9 to Nov 20 (Rules) and Oct 26 to Nov 20 (schedule page).
 
-**Our approach:** the project runs locally with one command, and it can be deployed as a single Node service (see `README.md`, Deployment). Whether to publish a public endpoint is the submitter's call. The Rules say ambiguity should go to organizers as a written clarification request.
+**Our approach:** we meet both readings. The project runs locally with one command, and a live endpoint runs at https://aftercare-mxfm.onrender.com/mcp through the end of judging (see `README.md`, Deployment, and the hosting limits in [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md)).
 
 ## 5. Branding and simulation
 
