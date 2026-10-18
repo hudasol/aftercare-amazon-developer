@@ -63,7 +63,7 @@ The simulated retailer shares the SQLite file for convenience, but it lives in i
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | facts       | Resolves each `(subject, attribute)` using the authority policy (below). Records claims settled by authority, unresolved conflicts, and inadmissible claims.                                                                                                                                                                               |
 | subject     | Works out which order line the case is about: a single match, or a serial number checked against shipment records. With several candidates it evaluates each one, so it can explain why identity matters.                                                                                                                                  |
-| policy      | Chooses the policy version in effect on the **order date**, and records why every other version was not used.                                                                                                                                                                                                                              |
+| policy      | Chooses the governing version from each policy's stated scope (`appliesTo`: the version in effect on the **order date**), and records why every other version was not used.                                                                                                                                                                |
 | eligibility | Evaluates the rules under every combination of unresolved values (delivery dates, reason). If the outcome is the same either way, the conflict is immaterial and recorded as uncertainty. If it differs, the conflict is material and the case is blocked for review. It asks the customer only for information that changes the decision. |
 | actions     | Evaluates every catalogue action (return for refund, refund without return, replacement, warranty referral) against its preconditions, and records which are met.                                                                                                                                                                          |
 | operations  | Accounts for proposals and operations already on record. It withdraws proposals whose evidence has changed, and never withdraws one with an operation in flight.                                                                                                                                                                           |
@@ -105,7 +105,7 @@ stateDiagram-v2
   needs_reconciliation --> awaiting_verification: found at retailer
   needs_reconciliation --> ready_to_submit: retailer has no record
   awaiting_verification --> resolved: postconditions verified
-  awaiting_verification --> needs_review: refused or mismatch
+  awaiting_verification --> needs_review: refused, or terms do not match
   resolved --> [*]
   closed --> [*]
 ```
@@ -120,7 +120,8 @@ The action lifecycle shown to people is **Prepared → Approved → Submitted �
 2. **Write-ahead.** The operation (status `submitting`, with a stable idempotency key) and the `executing` state are committed before the retailer is called. On startup, any case still `executing` is moved to reconciliation (`recoverInterrupted`).
 3. **No blind retry.** A timeout or an unexpected error after sending marks the outcome `outcome_unknown`. The compiler then requires reconciliation (`findReturnByIdempotencyKey`) before anything else, and `execute` refuses with `reconciliation_required`. A retry happens only after a _definite_ non-execution, reuses the same idempotency key, and stops after 3 attempts.
 4. **Verified outcome.** "Accepted" means submitted, not done. `verifyReturnPostconditions` reads the return back from the retailer and checks order, line, amount, shipping terms, status and label against the approved proposal. Only then is the operation `confirmed`.
-5. **Duplicate protection inside our control.** Unique constraints cover live proposal digests per case, one operation per proposal, and idempotency keys. A second submission of an accepted operation is refused with `duplicate_operation`. Idempotency does **not** guarantee exactly-once behaviour inside a real retailer. The sandbox honours keys because we wrote it to.
+5. **Mismatch is not success.** If the retailer has a return whose order, amount or shipping terms differ from the approval, the operation becomes `mismatch`. That is neither confirmed nor refused; the case is escalated and resubmission is blocked.
+6. **Duplicate protection inside our control.** Unique constraints cover live proposal digests per case, one operation per proposal, and idempotency keys. A second submission of an accepted operation is refused with `duplicate_operation`. Idempotency does **not** guarantee exactly-once behaviour inside a real retailer. The sandbox honours keys because we wrote it to.
 
 ## Persistence
 

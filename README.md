@@ -18,7 +18,7 @@ Built for the **Alexa+ track** of the Amazon Developer Hackathon (AmazonAppDev 2
 2. **Establish evidence.** It finds **two** orders for the same headphones, plus **two** versions of the store's return policy. The policy changed on Oct 1 from 30 days to 15.
 3. **Block correctly.** The older pair's window closed on Aug 30; the newer pair is returnable until Oct 30. Starting a return for the wrong order would be wrong, so it asks which pair the customer has.
 4. **Resolve the blocker.** The customer reads the serial number. A wrong serial is checked against shipment records and rejected; the right one identifies the order.
-5. **Plan and authorize.** It drafts a return using the policy version **in effect when the item was ordered**, with explicit preconditions and expected postconditions. Saying "yes, go ahead" in chat is not approval. Only approving the exact proposal, bound by a SHA-256 fingerprint, authorizes it.
+5. **Plan and authorize.** It drafts a return using the policy version **in effect when the item was ordered**, with explicit preconditions and expected postconditions. Saying "yes, go ahead" in chat is not approval. Approval is recorded only through an explicit approve call that names the exact proposal and its SHA-256 fingerprint; if the evidence changes, that approval no longer applies. Over MCP, the assistant calling the tool is responsible for asking the customer (see [the threat model](docs/THREAT_MODEL.md)).
 6. **Execute and recover.** The store creates the return but the response is lost. The case shows **Outcome unknown**. AFTERCARE does not resubmit: it looks the request up by its idempotency key, finds it, then verifies the record against what was approved.
 7. **Confirm and resume.** Only then is it **Confirmed**. Reloading, or restarting the server, resumes the case from the database with its full history.
 
@@ -52,6 +52,16 @@ Other commands:
 | `npm run test:e2e`  | Playwright end-to-end tests (run `npx playwright install chromium` once)               |
 
 Configuration is optional. See [`.env.example`](.env.example); a `.env` file is read if present.
+
+## Deployment
+
+AFTERCARE is one Node.js 24 process with a SQLite file. Nothing else is needed.
+
+1. `npm ci && npm run build`
+2. Set `HOST=0.0.0.0`, a `PORT`, and `AFTERCARE_ACCESS_TOKEN` (16+ characters; the server refuses to listen on a non-loopback address without it). Set `AFTERCARE_ALLOWED_ORIGINS` to the public origin, and `DATABASE_PATH` to a persistent disk.
+3. `npm start`. MCP clients then call `https://<host>/mcp` with `Authorization: Bearer <token>`.
+
+It has not been deployed to a public URL from this repository; see [Known limitations](docs/KNOWN_LIMITATIONS.md).
 
 ## How it works
 
@@ -96,7 +106,7 @@ These are behaviour tests on a small synthetic set, not statistical estimates. T
 
 ## Tests
 
-- **72 unit, integration and transport tests** (`npm test`). They cover the authority policy, policy versions, the lifecycle, compiler decisions and invariants; the full flagship journey through the application layer, including restart and crash recovery; MCP over real HTTP with the official client; and exact reproduction of the evaluation results.
+- **79 unit, integration and transport tests** (`npm test`). They cover the authority policy, policy versions, the lifecycle, compiler decisions and invariants; the full flagship journey through the application layer, including restart and crash recovery; MCP over real HTTP with the official client; and exact reproduction of the evaluation results.
 - **7 Playwright end-to-end tests** (`npm run test:e2e`). They cover the full journey in a real browser, the refusal path, Lab controls, a real server restart mid-case, axe accessibility checks, keyboard-only approval, and phone-width layout.
 
 ## Repository map
@@ -123,6 +133,7 @@ docs/                requirements, architecture, threat model, evaluation, demo 
 - [Demo script](docs/DEMO_SCRIPT.md)
 - [Known limitations](docs/KNOWN_LIMITATIONS.md)
 - [Product feedback draft](docs/PRODUCT_FEEDBACK.md)
+- [Adversarial review findings and resolutions](docs/REVIEW_FINDINGS.md)
 
 ## License
 

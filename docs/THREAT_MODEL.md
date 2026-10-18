@@ -54,6 +54,7 @@ The retailer, its policies, shipment records, return labels (`demo://` URLs) and
 
 ## Known risks and gaps
 
+- **Approval over MCP is as strong as the client.** The server records approval only through `approve_proposed_return`, which must name the exact proposal and its digest, and it refuses stale or mismatched approvals. It cannot verify that a human actually agreed: an MCP client that hears "yes, go ahead" can call the tool directly. The tool description instructs clients to confirm the exact terms first. Stronger options for a real deployment include MCP elicitation for confirmation, or a short read-back code shown to the customer. The web assistant surface sends approval only from its explicit button.
 - **Demo identity.** There is no real customer authentication. The server acts for one configured demo customer (`AFTERCARE_DEMO_CUSTOMER`). A real deployment needs account linking (for Alexa+, OAuth 2.1 with PKCE per the Alexa+ MCP Toolkit docs, which participants cannot access) and per-request identity.
 - **Demo controls are not role-gated.** `/api/demo/*` is open to anyone who can reach the API. With the access token set, it is limited to token holders. A real deployment would remove these endpoints.
 - **No rate limiting** on `/mcp` or `/api`.
