@@ -48,9 +48,9 @@ test('Return Rescue: blocked, resolved, approved, ambiguous timeout, reconciled,
   await page.getByLabel('Message').fill('Yes, go ahead!');
   await page.getByRole('button', { name: 'Send', exact: true }).click();
   await expect(page.getByText('I only act on an explicit approval').first()).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Approve return' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Approve and send return' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Approve return' }).click();
+  await page.getByRole('button', { name: 'Approve and send return' }).click();
   // The seeded retailer loses the first response; the surface reconciles and verifies by itself.
   await expect(slip.locator('.slip-stamp')).toHaveText('CONFIRMED', { timeout: 20_000 });
   await expect(page.locator('.now-speech')).toContainText('confirmed');
@@ -83,7 +83,7 @@ test('the older pair is refused with the reason, and nothing is proposed', async
   await giveSerial(page, 'HA-7Q2-0193');
   await expect(page.getByRole('heading', { name: 'This item can’t be returned' })).toBeVisible();
   await expect(page.getByText('The return window closed on August 30.').first()).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Approve return' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Approve and send return' })).toHaveCount(0);
 });
 
 test('the Lab drives the scenario through MCP and introduces conflicts', async ({ page }) => {
@@ -135,7 +135,7 @@ test('pages have no serious accessibility violations', async ({ page }) => {
   }
   await startFlagship(page);
   await giveSerial(page, 'HA-7Q2-4471');
-  await expect(page.getByRole('button', { name: 'Approve return' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Approve and send return' })).toBeVisible();
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(
     results.violations
@@ -149,7 +149,7 @@ test('pages have no serious accessibility violations', async ({ page }) => {
 test('keyboard users can approve with visible focus', async ({ page }) => {
   await startFlagship(page);
   await giveSerial(page, 'HA-7Q2-4471');
-  const approve = page.getByRole('button', { name: 'Approve return' });
+  const approve = page.getByRole('button', { name: 'Approve and send return' });
   await expect(approve).toBeVisible();
   // Reach the button with the keyboard alone.
   let reached = false;
@@ -249,7 +249,7 @@ test.describe('process restart', () => {
     await page.goto(base);
     await page.getByRole('button', { name: new RegExp('keep disconnecting') }).click();
     await giveSerial(page, 'HA-7Q2-4471');
-    await expect(page.getByRole('button', { name: 'Approve return' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Approve and send return' })).toBeVisible();
     const url = page.url();
     const before = await (
       await page.request.get(`${base}/api/cases/${url.split('/').pop()}`)
@@ -259,7 +259,7 @@ test.describe('process restart', () => {
     await startServer();
 
     await page.goto(url);
-    await expect(page.getByRole('button', { name: 'Approve return' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Approve and send return' })).toBeVisible();
     const after = await (
       await page.request.get(`${base}/api/cases/${url.split('/').pop()}`)
     ).json();
