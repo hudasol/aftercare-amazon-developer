@@ -18,6 +18,7 @@ export const SUBMISSION_OUTCOMES = [
   'unavailable',
   'timeout_after_commit',
   'timeout_before_commit',
+  'accept_with_fee',
 ] as const;
 export type ScriptedSubmission = (typeof SUBMISSION_OUTCOMES)[number];
 
@@ -27,6 +28,7 @@ export const OUTCOME_DESCRIPTIONS: Record<ScriptedSubmission, string> = {
   unavailable: 'Retailer reports it is unavailable; nothing is created.',
   timeout_after_commit: 'Retailer creates the return, but the response is lost (ambiguous).',
   timeout_before_commit: 'Request is lost before the retailer processes it (ambiguous).',
+  accept_with_fee: 'Retailer creates the return but deducts a $15 restocking fee nobody approved.',
 };
 
 export interface DemoDeps {

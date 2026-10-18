@@ -766,7 +766,8 @@ export function compileCase(input: CompilerInput): Assessment {
 
   // ---- Stage 6: operations ---------------------------------------------------
   const live = proposals.filter((p) => p.status === 'prepared' || p.status === 'approved');
-  const latestOp = [...operations].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))[0] ?? null;
+  // Input order is creation order, so the last operation is the newest.
+  const latestOp = operations.at(-1) ?? null;
   const opForProposal = (id: string) => operations.find((o) => o.proposalId === id) ?? null;
   const pendingOp =
     latestOp && BLOCKING_OPERATION_STATUSES.includes(latestOp.status) ? latestOp : null;
@@ -837,6 +838,26 @@ export function compileCase(input: CompilerInput): Assessment {
       ? `Your return is confirmed. Return ${pendingOp.externalRef ?? ''} is authorized${label ? ' and your prepaid label is ready' : ''}. Your ${money(p.parameters.refundAmountCents, p.parameters.currency)} refund is issued once the retailer receives the ${p.parameters.productName}.`
       : 'Your return is confirmed.';
     speech = 'Your return is confirmed and the label is ready.';
+  } else if (pendingOp && pendingOp.status === 'mismatch') {
+    kind = 'escalate_for_review';
+    nextCaseState = 'needs_review';
+    operationId = pendingOp.id;
+    proposalId = pendingOp.proposalId;
+    const failed = Array.isArray(pendingOp.observed?.['checks'])
+      ? (pendingOp.observed['checks'] as { passed: boolean; description: string }[])
+          .filter((c) => !c.passed)
+          .map((c) => c.description.toLowerCase())
+      : [];
+    blockers.push({
+      code: 'outcome_mismatch',
+      title: 'The retailer’s return does not match the approval',
+      customerExplanation: `The retailer has a return${pendingOp.externalRef ? ` (${pendingOp.externalRef})` : ''}, but it doesn’t match what you approved${failed.length ? `: ${failed.join('; ')}` : ''}.`,
+      resolvesWith: 'Retailer support corrects the return to the approved terms.',
+    });
+    rationale =
+      'A return exists but its terms differ from the approved proposal. It is neither confirmed nor safe to resubmit.';
+    customerMessage = `The retailer created a return${pendingOp.externalRef ? ` (${pendingOp.externalRef})` : ''}, but it doesn’t match what you approved${failed.length ? ` (${failed.join('; ')})` : ''}. I haven’t accepted it as done and won’t submit another. I’ve flagged it for review by the retailer’s support team.`;
+    speech = 'The retailer’s return doesn’t match what you approved. I’ve flagged it for review.';
   } else if (latestOp?.status === 'rejected') {
     kind = 'escalate_for_review';
     nextCaseState = 'needs_review';
