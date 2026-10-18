@@ -110,3 +110,25 @@ export interface Clock {
   /** Wall-clock instant for event timestamps. */
   now(): string;
 }
+
+export type IdGenerator = (prefix: string) => string;
+
+/**
+ * Demo-only controls of a simulated retailer. A real retailer integration
+ * would not implement this; the Lab and the evaluation harness use it to
+ * script outcomes and to show what the retailer actually recorded.
+ */
+export interface SandboxControls {
+  queueOutcome(operation: 'create_return' | 'lookup', outcome: string, note: string | null): void;
+  clearQueue(): void;
+  listQueue(): { operation: string; outcome: string; note: string | null }[];
+  requestLog(): {
+    at: string;
+    operation: string;
+    requestKey: string | null;
+    outcome: string;
+    detail: string | null;
+  }[];
+  listReturns(): RetailerReturn[];
+  addCarrierScan(scan: CarrierScan): void;
+}
