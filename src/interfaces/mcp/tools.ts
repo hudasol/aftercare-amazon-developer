@@ -235,6 +235,8 @@ export function buildMcpServer(container: Container, customerRef: string): McpSe
       annotations?: Record<string, boolean>;
     },
     run: (args: z.infer<z.ZodObject<A>>) => Promise<CaseView>,
+    /** Read-only tools do not write to the case history. */
+    audit = true,
   ) => {
     server.registerTool(
       name,
@@ -243,18 +245,20 @@ export function buildMcpServer(container: Container, customerRef: string): McpSe
       (async (args: z.infer<z.ZodObject<A>>) => {
         try {
           const view = await run(args);
-          repo.transaction(() =>
-            repo.appendEvent(
-              {
-                caseId: view.case.id,
-                type: 'mcp.tool_called',
-                actor: 'mcp_client',
-                summary: `MCP tool ${name} called.`,
-                data: { tool: name },
-              },
-              new Date().toISOString(),
-            ),
-          );
+          if (audit) {
+            repo.transaction(() =>
+              repo.appendEvent(
+                {
+                  caseId: view.case.id,
+                  type: 'mcp.tool_called',
+                  actor: 'mcp_client',
+                  summary: `MCP tool ${name} called.`,
+                  data: { tool: name },
+                },
+                new Date().toISOString(),
+              ),
+            );
+          }
           const result = toCaseResult(view);
           return {
             content: [{ type: 'text' as const, text: result.speech }],
@@ -343,7 +347,9 @@ export function buildMcpServer(container: Container, customerRef: string): McpSe
           .string()
           .min(2)
           .max(500)
-          .describe('The customer’s words of approval, verbatim.'),
+          .describe(
+            'The customer’s confirmation as the client captured it: their words, or a description of the control they used (for example "Pressed Approve on the return slip").',
+          ),
       },
       annotations: {
         readOnlyHint: false,
@@ -417,6 +423,7 @@ export function buildMcpServer(container: Container, customerRef: string): McpSe
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async (args) => service.getCase(args.caseId, customerRef),
+    false,
   );
 
   server.registerTool(
