@@ -80,18 +80,19 @@ Each returns typed `structuredContent` with a short `speech` line for voice and 
 
 ## Measured results
 
-14 hand-labelled scenarios, each run against AFTERCARE and against a simpler agent with the same tools but none of the controls. Scores come from the simulated retailer's own records.
+14 hand-labelled synthetic scenarios, each run against AFTERCARE and against a simpler agent with the same tools but none of the controls. Scores come from the simulated retailer's own records, judged after it has finished processing.
 
 |                               |   AFTERCARE | Baseline |
 | ----------------------------- | ----------: | -------: |
-| Correct outcome               | **14 / 14** |   3 / 14 |
-| False confirmations           |           0 |        7 |
-| Authorization violations      |           0 |        3 |
+| Correct outcome               | **14 / 14** |   7 / 14 |
 | Wrongful denials              |           0 |        2 |
 | Missed blockers               |           0 |        1 |
+| Authorization violations      |           0 |        2 |
+| Wrong terms submitted         |           0 |        2 |
 | Duplicate submission attempts |           0 |        1 |
+| Confirmed before verifying    |           0 |        7 |
 
-The baseline is a reference point, not a measurement of any particular LLM. Definitions, per-scenario results and limitations are in [docs/EVALUATION.md](docs/EVALUATION.md).
+These are behaviour tests on a small synthetic set, not statistical estimates. The baseline is a reference point, not a measurement of any particular LLM. "Confirmed before verifying" counts claims made before checking; in this sandbox those returns were later authorized. Definitions, per-scenario results and limitations are in [docs/EVALUATION.md](docs/EVALUATION.md).
 
 ## Tests
 
