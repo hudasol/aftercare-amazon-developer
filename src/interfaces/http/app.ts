@@ -260,14 +260,12 @@ export function createHttpApp(container: Container, config: Config, logger: Logg
       return;
     }
     logger.error('Unhandled error', error);
-    res
-      .status(500)
-      .json({
-        error: {
-          code: 'internal_error',
-          message: 'Something went wrong on our side. Reload the case to see its current state.',
-        },
-      });
+    res.status(500).json({
+      error: {
+        code: 'internal_error',
+        message: 'Something went wrong on our side. Reload the case to see its current state.',
+      },
+    });
   });
 
   return app;
