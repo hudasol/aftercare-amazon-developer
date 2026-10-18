@@ -97,7 +97,7 @@ export class RulesInterpreter implements Interpreter {
       orderNumber: order ? order.toUpperCase() : null,
       soundsLikeApproval: AGREE.test(text),
       // A message that describes a fault is never read as a request to give up.
-      wantsToCancel: CANCEL.test(text) && !defect && !RETURN.test(text),
+      wantsToCancel: CANCEL.test(text) && !defect,
     };
   }
 }
