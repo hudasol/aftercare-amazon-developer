@@ -371,7 +371,7 @@ export function compileCase(input: CompilerInput): Assessment {
   } else if (serial && serialMatches.length === 1) {
     chosen = serialMatches[0] as CandidateEvaluation;
     subjectStatus = 'identified';
-    subjectBasis = `Serial ${serial} matches the units shipped on order ${chosen.order.orderId}.`;
+    subjectBasis = `Serial ${String(serialFact?.value)} matches a unit shipped on order ${chosen.order.orderId}.`;
   } else if (orders.length === 1) {
     chosen = evaluations[0] as CandidateEvaluation;
     subjectStatus = 'identified';
@@ -416,7 +416,7 @@ export function compileCase(input: CompilerInput): Assessment {
     missing.push({
       id: 'item_serial',
       label: 'Serial number of the item',
-      why: 'Several orders match and they differ in what is allowed, so the exact item must be known.',
+      why: 'You have more than one matching order, and they don’t all allow a return, so I need to know which one you have.',
       obtainableFrom: 'customer',
       blocking: true,
     });
@@ -530,9 +530,9 @@ export function compileCase(input: CompilerInput): Assessment {
           ? repResult.alternative
           : null,
       explanation: eligible
-        ? `Delivered ${rep?.deliveredOn}; ${repResult.rule?.summary} Deadline ${repResult.deadline}.`
+        ? `Delivered ${date(rep?.deliveredOn ?? null)}. ${repResult.rule?.summary} Return by ${date(repResult.deadline)}.`
         : repResult.status === 'not_eligible' && repResult.code === 'window_closed'
-          ? `Delivered ${rep?.deliveredOn}; the return window closed on ${repResult.deadline}.`
+          ? `Delivered ${date(rep?.deliveredOn ?? null)}. The return window closed on ${date(repResult.deadline)}.`
           : 'The governing policy has no return rule for this item and reason.',
     };
   } else if (

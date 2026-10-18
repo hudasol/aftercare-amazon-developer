@@ -3,7 +3,6 @@
  * into evidence items with explicit provenance.
  */
 import type { Evidence, Fact } from '../domain/evidence.js';
-import { normalizeSerial } from '../domain/compiler.js';
 import type { PolicyDocument } from '../domain/policy.js';
 import type { CarrierScan, Interpretation, RetailerOrder } from './ports.js';
 
@@ -164,7 +163,8 @@ export function serialEvidence(
     source: { type: 'customer_identifier', name: 'Customer (serial on the item)', reference: null },
     simulated: false,
     verification: match ? 'verified' : 'failed',
-    facts: [{ subject: 'item', attribute: 'serialNumber', value: normalizeSerial(serial) }],
+    // Kept as the customer gave it (upper-cased); matching normalizes separately.
+    facts: [{ subject: 'item', attribute: 'serialNumber', value: serial.trim().toUpperCase() }],
     note: match
       ? `Matches a unit shipped on order ${match.orderId} (checked against ${retailerName} shipment records).`
       : `Does not match any unit shipped to this customer (checked against ${retailerName} shipment records).`,
