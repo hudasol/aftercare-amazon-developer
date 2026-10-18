@@ -8,26 +8,26 @@ This file separates what the official sources say (quoted) from our reading of t
 
 ## 1. What the Alexa+ track accepts
 
-| Topic | Confirmed (source) | Our reading |
-| --- | --- | --- |
-| Valid submission | Build "a working Agent Skill or a self-hosted MCP server" (Rules, project requirements). The minimum MCP version is 2025-11-25. | Two routes: a self-hosted MCP server, or a simulated Alexa+ experience in a web app. |
-| MCP route specifics | MCP server must implement "spec version 2025-11-25 (or a later version, once confirmed) over Streamable HTTP" (Rules, submission requirements). | 2026-07-28 now exists, but the rules have not confirmed it, so we target **2025-11-25**. |
-| Simulated route | "simulate the Alexa+ experience in a web app"; no "specific framework, SDK, or MCP-shaped surface required"; exempt from the runtime-technology-hook requirement (Rules). | Allowed, but it shows less of the track's technology. |
-| Runtime proof (non-simulated) | Track technology must be "imported and actually called", "not just named in the README" (Rules). | Our MCP tools must actually be called at runtime. The demo client calls them over HTTP. |
-| Demo client | A standard MCP client is "technically sufficient", but a polished UI that "could reasonably work through an Echo device will likely score higher" (forum 45567). A web page sending initialize, tools/list and tools/call over Streamable HTTP "satisfies the requirement" (FAQ). | Our customer surface is a web MCP client, labeled as a simulated Alexa+-style surface. |
-| Native Alexa+ integration | Add-on tools (Category SDK, MCP Toolkit, CLI, Web Simulator) "are in preview and available to select partners only", with "no way for hackathon participants to apply" (FAQ). Registering a server with Alexa+ directly "is incorrect" (forum 45263). Expected level of Alexa+ integration: "None whatsoever" (forum 45397). | We make no native integration claim. There is no account linking and no Alexa+ registration. |
+| Topic                         | Confirmed (source)                                                                                                                                                                                                                                                                                                           | Our reading                                                                                  |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Valid submission              | Build "a working Agent Skill or a self-hosted MCP server" (Rules, project requirements). The minimum MCP version is 2025-11-25.                                                                                                                                                                                              | Two routes: a self-hosted MCP server, or a simulated Alexa+ experience in a web app.         |
+| MCP route specifics           | MCP server must implement "spec version 2025-11-25 (or a later version, once confirmed) over Streamable HTTP" (Rules, submission requirements).                                                                                                                                                                              | 2026-07-28 now exists, but the rules have not confirmed it, so we target **2025-11-25**.     |
+| Simulated route               | "simulate the Alexa+ experience in a web app"; no "specific framework, SDK, or MCP-shaped surface required"; exempt from the runtime-technology-hook requirement (Rules).                                                                                                                                                    | Allowed, but it shows less of the track's technology.                                        |
+| Runtime proof (non-simulated) | Track technology must be "imported and actually called", "not just named in the README" (Rules).                                                                                                                                                                                                                             | Our MCP tools must actually be called at runtime. The demo client calls them over HTTP.      |
+| Demo client                   | A standard MCP client is "technically sufficient", but a polished UI that "could reasonably work through an Echo device will likely score higher" (forum 45567). A web page sending initialize, tools/list and tools/call over Streamable HTTP "satisfies the requirement" (FAQ).                                            | Our customer surface is a web MCP client, labeled as a simulated Alexa+-style surface.       |
+| Native Alexa+ integration     | Add-on tools (Category SDK, MCP Toolkit, CLI, Web Simulator) "are in preview and available to select partners only", with "no way for hackathon participants to apply" (FAQ). Registering a server with Alexa+ directly "is incorrect" (forum 45263). Expected level of Alexa+ integration: "None whatsoever" (forum 45397). | We make no native integration claim. There is no account linking and no Alexa+ registration. |
 
 ## 2. Mandatory submission items
 
-| Requirement | Source | Status in this repo |
-| --- | --- | --- |
-| Working project built during the submission window | Rules | Built from an empty repository during the window (see git history). |
-| GitHub repo with "all necessary source code, assets, and instructions" and "clear setup and run instructions" | Rules | `README.md`. |
-| Repo must be public with an open-source license file visible in the About section, **or** private and shared with the named reviewers | Rules; update "Got an idea"; forum 45264 | Apache-2.0 `LICENSE`. **Action for the submitter:** make the repo public and check that the license shows in the About sidebar. |
-| Demo video under three minutes on YouTube or Vimeo, public, showing the project working | Rules | `docs/DEMO_SCRIPT.md` is the script. **Action for the submitter:** record and upload it. |
-| Text description | Rules | Can be drawn from `README.md`. |
-| Product feedback on every tool, API or SDK used | Rules ("a required part of every submission") | `docs/PRODUCT_FEEDBACK.md` is a draft. **Action for the submitter:** review it and paste it into the form. |
-| Track and mini-challenge selection | Rules | Alexa+ track. |
+| Requirement                                                                                                                           | Source                                        | Status in this repo                                                                                                             |
+| ------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Working project built during the submission window                                                                                    | Rules                                         | Built from an empty repository during the window (see git history).                                                             |
+| GitHub repo with "all necessary source code, assets, and instructions" and "clear setup and run instructions"                         | Rules                                         | `README.md`.                                                                                                                    |
+| Repo must be public with an open-source license file visible in the About section, **or** private and shared with the named reviewers | Rules; update "Got an idea"; forum 45264      | Apache-2.0 `LICENSE`. **Action for the submitter:** make the repo public and check that the license shows in the About sidebar. |
+| Demo video under three minutes on YouTube or Vimeo, public, showing the project working                                               | Rules                                         | `docs/DEMO_SCRIPT.md` is the script. **Action for the submitter:** record and upload it.                                        |
+| Text description                                                                                                                      | Rules                                         | Can be drawn from `README.md`.                                                                                                  |
+| Product feedback on every tool, API or SDK used                                                                                       | Rules ("a required part of every submission") | `docs/PRODUCT_FEEDBACK.md` is a draft. **Action for the submitter:** review it and paste it into the form.                      |
+| Track and mini-challenge selection                                                                                                    | Rules                                         | Alexa+ track.                                                                                                                   |
 
 ## 3. Judging
 
@@ -59,24 +59,24 @@ How AFTERCARE answers this:
 
 ## 6. Mini-challenges (optional)
 
-| Challenge | Requirement | Decision |
-| --- | --- | --- |
+| Challenge   | Requirement                                                                                                                        | Decision                                                                                                                                                                                                    |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | AWS Builder | "incorporates AWS services (i.e. Amazon Bedrock, AgentCore, Strands SDK, Kiro Crew, SageMaker, etc.) with documented integrations" | **Not pursued.** There are no AWS credentials in this environment, the hackathon's AWS credits ran out on Oct 7, and adding an AWS service just for the prize would add risk without improving the product. |
-| Open Source | A *new, additional* open-source project or contribution. The primary-track repo "doesn't count" (forums 45547, 45567). | **Not pursued.** It needs a separate project and would pull time from the primary submission. |
+| Open Source | A _new, additional_ open-source project or contribution. The primary-track repo "doesn't count" (forums 45547, 45567).             | **Not pursued.** It needs a separate project and would pull time from the primary submission.                                                                                                               |
 
 ## 7. Route decision
 
-| Criterion | Route A: self-hosted MCP server | Route B: simulated web experience |
-| --- | --- | --- |
-| Eligibility | Explicitly accepted. Needs 2025-11-25 and Streamable HTTP, called at runtime. | Explicitly accepted and exempt from the runtime hook. |
-| Tooling available to us | Official TypeScript SDK 1.32.1 negotiates `2025-11-25` (checked locally on Node 24). | No constraints. |
-| Implementation risk | Moderate. Transport and tool contracts need tests. | Low. |
-| Demonstrability | A web MCP client gives the same visual demo as Route B, and the server also works with any standard MCP client. | Good, but the agent boundary exists only inside the app. |
-| Product fit | Tools are the boundary an assistant like Alexa+ would call, so the add-on story is real. | A simulation of something we could have built for real. |
+| Criterion               | Route A: self-hosted MCP server                                                                                 | Route B: simulated web experience                        |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| Eligibility             | Explicitly accepted. Needs 2025-11-25 and Streamable HTTP, called at runtime.                                   | Explicitly accepted and exempt from the runtime hook.    |
+| Tooling available to us | Official TypeScript SDK 1.32.1 negotiates `2025-11-25` (checked locally on Node 24).                            | No constraints.                                          |
+| Implementation risk     | Moderate. Transport and tool contracts need tests.                                                              | Low.                                                     |
+| Demonstrability         | A web MCP client gives the same visual demo as Route B, and the server also works with any standard MCP client. | Good, but the agent boundary exists only inside the app. |
+| Product fit             | Tools are the boundary an assistant like Alexa+ would call, so the add-on story is real.                        | A simulation of something we could have built for real.  |
 
 **Chosen: Route A.** AFTERCARE is a self-hosted MCP server on spec 2025-11-25 over Streamable HTTP. Its tools call the same application services as the web interface.
 
-The customer experience is a web MCP client, labeled *"Simulated Alexa+-style surface"*. It does what an assistant would do: it sends the customer's words and structured choices to the tools, and it renders the returned `speech` and `display`. Route B was rejected because it would show less of the track's technology for no reduction in risk. The MCP server is the part of the system that would actually connect to Alexa+.
+The customer experience is a web MCP client, labeled _"Simulated Alexa+-style surface"_. It does what an assistant would do: it sends the customer's words and structured choices to the tools, and it renders the returned `speech` and `display`. Route B was rejected because it would show less of the track's technology for no reduction in risk. The MCP server is the part of the system that would actually connect to Alexa+.
 
 ## 8. What the demo must show
 
