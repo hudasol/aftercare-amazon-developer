@@ -133,7 +133,8 @@ export function AssistantView({
       caseId: view.case.id,
       proposalId: proposal.id,
       proposalDigest: proposal.digest,
-      customerConfirmation: `Approved on the assistant surface: return order ${proposal.parameters.orderId} for ${money(proposal.parameters.refundAmountCents, proposal.parameters.currency)}.`,
+      // What the client actually captured: the control the customer used, not invented words.
+      customerConfirmation: `Pressed “Approve and send return” on the return slip for order ${proposal.parameters.orderId} (${money(proposal.parameters.refundAmountCents, proposal.parameters.currency)}).`,
     });
     if (approved?.case.state === 'ready_to_submit') await submit(proposal.id, approved);
   };
@@ -159,7 +160,28 @@ export function AssistantView({
   return (
     <main className="assistant" id="main">
       <section className="conversation" aria-label="Conversation">
-        {!view ? (
+        {caseId && !view ? (
+          error ? (
+            <div className="welcome">
+              <h1>That case couldn’t be opened</h1>
+              <p className="welcome-lede">
+                It may belong to someone else or no longer exist. Your own cases are listed on the
+                right.
+              </p>
+              <button
+                className="btn btn-primary"
+                style={{ marginTop: 24 }}
+                onClick={() => navigate({ view: 'assistant', caseId: null })}
+              >
+                Start a new case
+              </button>
+            </div>
+          ) : (
+            <p className="thinking" role="status" style={{ marginTop: 48 }}>
+              Loading your case…
+            </p>
+          )
+        ) : !view ? (
           <Welcome onStart={(t) => void send(t)} busy={busy !== null} />
         ) : (
           <>
@@ -301,7 +323,7 @@ export function AssistantView({
         </div>
         {session && (
           <p className="fine">
-            Signed in as {session.customerName}. {session.retailer.name} is a simulated retailer: no
+            Acting as {session.customerName}. {session.retailer.name} is a simulated retailer: no
             real orders, returns or refunds are created.
           </p>
         )}
@@ -412,9 +434,16 @@ function ActionArea(props: ActionAreaProps) {
   }
   if (state === 'needs_review') {
     const refused = view.lifecycle.stage === 'refused';
+    const mismatch = view.lifecycle.stage === 'mismatch';
     return (
-      <div className="gate" data-tone={refused ? 'stop' : undefined}>
-        <h3>{refused ? 'The store refused this return' : 'Paused for review'}</h3>
+      <div className="gate" data-tone={refused || mismatch ? 'stop' : undefined}>
+        <h3>
+          {refused
+            ? 'The store refused this return'
+            : mismatch
+              ? 'The store’s return doesn’t match what you approved'
+              : 'Paused for review'}
+        </h3>
         {(a?.blockers ?? []).map((b) => (
           <p key={b.code}>{b.customerExplanation}</p>
         ))}
@@ -587,9 +616,12 @@ function Slip({
       <div className="slip-stub">
         {stage === 'prepared' && (
           <div className="slip-actions">
-            <p>You’re approving exactly this return. Nothing is sent to the store until you do.</p>
+            <p>
+              You’re approving exactly this return, and it will be sent to the store. Nothing is
+              sent until you do.
+            </p>
             <button className="btn btn-approve" disabled={busy} onClick={() => onApprove(proposal)}>
-              Approve return
+              Approve and send return
             </button>
             <button className="btn btn-quiet" disabled={busy} onClick={() => onDecline(proposal)}>
               Don’t return them

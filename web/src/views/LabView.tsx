@@ -93,6 +93,7 @@ export function LabView({ caseId, session }: { caseId: string | null; session: S
   const [view, setView] = useState<CaseView | null>(null);
   const [sandbox, setSandbox] = useState<SandboxState | null>(null);
   const [evaluation, setEvaluation] = useState<EvaluationResults | null>(null);
+  const [evaluationError, setEvaluationError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [highlight, setHighlight] = useState<string[]>([]);
@@ -120,8 +121,15 @@ export function LabView({ caseId, session }: { caseId: string | null; session: S
       .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Could not load the Lab.'));
     api
       .evaluation()
-      .then((r) => setEvaluation(r.results ?? null))
-      .catch(() => undefined);
+      .then((r) => {
+        setEvaluation(r.results ?? null);
+        if (!r.available) setEvaluationError('No evaluation results yet. Run npm run eval.');
+      })
+      .catch((e: unknown) =>
+        setEvaluationError(
+          e instanceof Error ? e.message : 'Evaluation results could not be loaded.',
+        ),
+      );
   }, [fetchAll, apply]);
 
   // Follow changes made elsewhere (for example the assistant surface in another window).
@@ -349,7 +357,15 @@ export function LabView({ caseId, session }: { caseId: string | null; session: S
         </section>
       )}
 
-      {evaluation && <Comparison results={evaluation} />}
+      {evaluation ? (
+        <Comparison results={evaluation} />
+      ) : (
+        evaluationError && (
+          <section className="panel" aria-label="Measured comparison">
+            <p className="empty">{evaluationError}</p>
+          </section>
+        )
+      )}
     </main>
   );
 }
@@ -759,6 +775,7 @@ const SIDE_NODES = [
     label: 'Refused',
     events: ['operation.rejected', 'verification.refused', 'reconciliation.refused'],
   },
+  { id: 'mismatch', label: 'Does not match', events: ['verification.mismatch'] },
 ];
 
 function LifecyclePanel({ view }: { view: CaseView }) {

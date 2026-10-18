@@ -1407,7 +1407,7 @@ a {
 
 .lc-side {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--s2);
   margin-top: var(--s2);
 }
@@ -1429,7 +1429,8 @@ a {
   color: var(--violet);
 }
 
-.lc-node[data-node='refused'][data-current='true'] {
+.lc-node[data-node='refused'][data-current='true'],
+.lc-node[data-node='mismatch'][data-current='true'] {
   background: var(--brick-tint);
   border-color: var(--brick);
   color: var(--brick);
