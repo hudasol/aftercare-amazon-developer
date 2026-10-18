@@ -34,7 +34,13 @@ import {
   type RetailerOrder,
 } from './ports.js';
 import type { CaseRepository, Channel, EventActor, MessageRecord } from './repository.js';
-import { STATE_LABELS, deriveLifecycle, type CaseSummary, type CaseView } from './views.js';
+import {
+  STATE_LABELS,
+  deriveJourney,
+  deriveLifecycle,
+  type CaseSummary,
+  type CaseView,
+} from './views.js';
 
 export interface ServiceDeps {
   repo: CaseRepository;
@@ -1050,13 +1056,16 @@ export class ResolutionService {
     const latest = this.repo.latestAssessment(caseId);
     const proposals = this.repo.listProposals(caseId);
     const operations = this.repo.listOperations(caseId);
+    const lifecycle = deriveLifecycle(latest?.body ?? null, proposals, operations);
+    const evidence = this.repo.listEvidence(caseId);
     return {
       case: { ...record, stateLabel: STATE_LABELS[record.state] },
       assessmentId: latest?.id ?? null,
       assessment: latest?.body ?? null,
-      lifecycle: deriveLifecycle(latest?.body ?? null, proposals, operations),
+      lifecycle,
+      journey: deriveJourney(record, latest?.body ?? null, evidence, lifecycle),
       messages: this.repo.listMessages(caseId),
-      evidence: this.repo.listEvidence(caseId),
+      evidence,
       proposals,
       approvals: this.repo.listApprovals(caseId),
       operations,
