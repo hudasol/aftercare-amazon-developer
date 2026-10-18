@@ -59,7 +59,9 @@ const SERIAL = /\b([A-Z]{2}-?[A-Z0-9]{3}-?\d{4})\b/i;
 const ORDER = /\b(KG-\d{4}-\d{4})\b/i;
 const AGREE =
   /^\s*(yes|yeah|yep|sure|ok(ay)?|go ahead|do it|please do|sounds good|approve[d]?|confirm(ed)?)\b/i;
-const CANCEL = /\b(cancel|never ?mind|forget it|stop|close (the|my) case)\b/i;
+// Only explicit requests count. Words like "stop" also describe faults ("they stop working").
+const CANCEL =
+  /\b(cancel (the|my|this) (case|return|request)|never ?mind|forget (it|about it)|close (the|my|this) case)\b/i;
 
 function sentenceContaining(text: string, pattern: RegExp): string | null {
   const sentences = text.split(/(?<=[.!?])\s+/);
@@ -94,7 +96,8 @@ export class RulesInterpreter implements Interpreter {
       serialNumber: serial && !ORDER.test(serial) ? serial.toUpperCase() : null,
       orderNumber: order ? order.toUpperCase() : null,
       soundsLikeApproval: AGREE.test(text),
-      wantsToCancel: CANCEL.test(text) && !RETURN.test(text),
+      // A message that describes a fault is never read as a request to give up.
+      wantsToCancel: CANCEL.test(text) && !defect && !RETURN.test(text),
     };
   }
 }

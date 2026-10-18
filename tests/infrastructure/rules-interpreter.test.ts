@@ -46,5 +46,13 @@ describe('RulesInterpreter', () => {
 
   it('detects cancellation', async () => {
     expect((await interpreter.interpret('Never mind, close my case')).wantsToCancel).toBe(true);
+    expect((await interpreter.interpret('Please cancel my return')).wantsToCancel).toBe(true);
+  });
+
+  it('never reads a fault description as cancellation', async () => {
+    const i = await interpreter.interpret('They just stop working after a few minutes.');
+    expect(i.reason).toBe('defective');
+    expect(i.wantsToCancel).toBe(false);
+    expect((await interpreter.interpret('Stop. They are broken.')).wantsToCancel).toBe(false);
   });
 });
