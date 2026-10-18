@@ -5,3 +5,5 @@ var
 test-results
 playwright-report
 package-lock.json
+data/evaluation
+docs/EVALUATION_RESULTS.md
