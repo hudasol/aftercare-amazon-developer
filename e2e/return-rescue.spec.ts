@@ -166,18 +166,34 @@ test('keyboard users can approve with visible focus', async ({ page }) => {
   ).toHaveText('CONFIRMED', { timeout: 20_000 });
 });
 
+/** Elements that extend past the visible width, named so a failure says what to fix. */
+async function wideElements(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    const limit = document.documentElement.clientWidth;
+    if (document.documentElement.scrollWidth <= limit) return [];
+    return [...document.querySelectorAll('body *')]
+      .filter((el) => el.getBoundingClientRect().right > limit + 0.5)
+      .slice(0, 8)
+      .map((el) => {
+        const right = Math.round(el.getBoundingClientRect().right);
+        const name = `${el.tagName.toLowerCase()}.${String(el.className).split(' ')[0]}`;
+        return `${name} right=${right} limit=${limit}`;
+      });
+  });
+}
+
 test('works on a phone-sized screen without sideways scrolling', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
+  // Always render the voice button, whatever the browser supports, so the widest layout is tested.
+  await page.addInitScript(() => {
+    (window as unknown as { webkitSpeechRecognition: unknown }).webkitSpeechRecognition = class {};
+  });
   await startFlagship(page);
-  const overflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - window.innerWidth,
-  );
-  expect(overflow).toBeLessThanOrEqual(0);
+  await expect(page.getByRole('button', { name: 'Speak', exact: true })).toBeVisible();
+  expect(await wideElements(page), 'assistant at phone width').toEqual([]);
   await page.goto('/lab');
-  const labOverflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - window.innerWidth,
-  );
-  expect(labOverflow).toBeLessThanOrEqual(0);
+  await expect(page.getByRole('heading', { name: 'Resolution Lab' })).toBeVisible();
+  expect(await wideElements(page), 'lab at phone width').toEqual([]);
 });
 
 test.describe('process restart', () => {
@@ -211,7 +227,8 @@ test.describe('process restart', () => {
   async function stopServer(): Promise<void> {
     if (!child) return;
     const exited = new Promise((r) => child?.once('exit', r));
-    child.kill();
+    // A hard kill, like a crash: nothing gets a chance to clean up.
+    child.kill('SIGKILL');
     await exited;
     child = null;
   }
