@@ -16,7 +16,7 @@
     "build:web": "vite build --config web/vite.config.ts",
     "start": "tsx src/main.ts",
     "db:reset": "tsx src/cli/reset-demo.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p web/tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p web/tsconfig.json --noEmit && tsc -p e2e/tsconfig.json --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -33,7 +33,9 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@eslint/js": "^10.0.1",
+    "@fontsource-variable/atkinson-hyperlegible-next": "^5.3.0",
     "@playwright/test": "^1.64.1",
     "@types/express": "^5.0.6",
     "@types/node": "^24.19.2",
