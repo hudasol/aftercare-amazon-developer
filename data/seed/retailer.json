@@ -1,0 +1,169 @@
+{
+  "$comment": "FICTIONAL DEMONSTRATION DATA. Kestrel Goods, Halden Audio, the customer and every order, serial number and policy below are invented for the AFTERCARE demo. Nothing here describes a real retailer, product, person or order.",
+  "retailer": {
+    "id": "kestrel-goods",
+    "name": "Kestrel Goods",
+    "policyId": "kestrel-returns"
+  },
+  "caseDate": "2026-10-17",
+  "customers": [
+    {
+      "ref": "cus_demo_maya",
+      "displayName": "Maya",
+      "fictional": true
+    }
+  ],
+  "orders": [
+    {
+      "orderId": "KG-1140-2207",
+      "customerRef": "cus_demo_maya",
+      "lineId": "L1",
+      "productName": "Halden Aria wireless headphones",
+      "category": "personal_audio",
+      "keywords": ["headphones", "wireless headphones", "headset", "halden", "aria"],
+      "priceCents": 18900,
+      "currency": "USD",
+      "seller": "Kestrel Goods",
+      "orderedOn": "2026-07-27",
+      "deliveredOn": "2026-07-31",
+      "serialNumbers": ["HA-7Q2-0193"],
+      "serialLocation": "inside the left ear cup, under the cushion"
+    },
+    {
+      "orderId": "KG-1158-0904",
+      "customerRef": "cus_demo_maya",
+      "lineId": "L1",
+      "productName": "Fernway ceramic pour-over set",
+      "category": "kitchen",
+      "keywords": ["pour-over", "coffee", "kettle", "fernway"],
+      "priceCents": 4400,
+      "currency": "USD",
+      "seller": "Kestrel Goods",
+      "orderedOn": "2026-09-08",
+      "deliveredOn": "2026-09-11",
+      "serialNumbers": [],
+      "serialLocation": null
+    },
+    {
+      "orderId": "KG-1162-5821",
+      "customerRef": "cus_demo_maya",
+      "lineId": "L1",
+      "productName": "Halden Aria wireless headphones",
+      "category": "personal_audio",
+      "keywords": ["headphones", "wireless headphones", "headset", "halden", "aria"],
+      "priceCents": 18900,
+      "currency": "USD",
+      "seller": "Kestrel Goods",
+      "orderedOn": "2026-09-26",
+      "deliveredOn": "2026-09-30",
+      "serialNumbers": ["HA-7Q2-4471"],
+      "serialLocation": "inside the left ear cup, under the cushion"
+    }
+  ],
+  "carrierScans": [],
+  "policies": [
+    {
+      "policyId": "kestrel-returns",
+      "version": "2026.1",
+      "title": "Kestrel Goods Returns & Refunds Policy",
+      "publisher": "Kestrel Goods (fictional)",
+      "effectiveFrom": "2026-01-01",
+      "effectiveTo": "2026-09-30",
+      "reference": "demo://kestrel-goods/policies/returns/2026.1",
+      "returnlessRefundMaxCents": 2500,
+      "afterWindowDefectRemedy": "manufacturer_warranty",
+      "rules": [
+        {
+          "id": "R1-ELEC-FAULT",
+          "summary": "Faulty electronics and headphones can be returned within 30 days of delivery for a full refund, with a prepaid label.",
+          "categories": ["personal_audio", "electronics"],
+          "reasons": ["defective"],
+          "windowDays": 30,
+          "windowStartsOn": "delivery",
+          "resolution": "refund",
+          "returnShipping": "prepaid_label"
+        },
+        {
+          "id": "R2-ELEC-CHANGE",
+          "summary": "Unwanted electronics and headphones can be returned within 30 days of delivery; the customer pays return shipping.",
+          "categories": ["personal_audio", "electronics"],
+          "reasons": ["changed_mind"],
+          "windowDays": 30,
+          "windowStartsOn": "delivery",
+          "resolution": "refund",
+          "returnShipping": "customer_paid"
+        },
+        {
+          "id": "R3-HOME",
+          "summary": "Home and kitchen items can be returned within 30 days of delivery.",
+          "categories": ["home", "kitchen"],
+          "reasons": ["defective", "changed_mind"],
+          "windowDays": 30,
+          "windowStartsOn": "delivery",
+          "resolution": "refund",
+          "returnShipping": "prepaid_label"
+        }
+      ]
+    },
+    {
+      "policyId": "kestrel-returns",
+      "version": "2026.2",
+      "title": "Kestrel Goods Returns & Refunds Policy",
+      "publisher": "Kestrel Goods (fictional)",
+      "effectiveFrom": "2026-10-01",
+      "effectiveTo": null,
+      "reference": "demo://kestrel-goods/policies/returns/2026.2",
+      "returnlessRefundMaxCents": 2500,
+      "afterWindowDefectRemedy": "manufacturer_warranty",
+      "rules": [
+        {
+          "id": "R1-AUDIO-FAULT",
+          "summary": "Faulty headphones and earbuds can be returned within 15 days of delivery for a full refund, with a prepaid label.",
+          "categories": ["personal_audio"],
+          "reasons": ["defective"],
+          "windowDays": 15,
+          "windowStartsOn": "delivery",
+          "resolution": "refund",
+          "returnShipping": "prepaid_label"
+        },
+        {
+          "id": "R2-AUDIO-CHANGE",
+          "summary": "Unwanted headphones and earbuds can be returned within 15 days of delivery; the customer pays return shipping.",
+          "categories": ["personal_audio"],
+          "reasons": ["changed_mind"],
+          "windowDays": 15,
+          "windowStartsOn": "delivery",
+          "resolution": "refund",
+          "returnShipping": "customer_paid"
+        },
+        {
+          "id": "R3-ELEC",
+          "summary": "Other electronics can be returned within 30 days of delivery.",
+          "categories": ["electronics"],
+          "reasons": ["defective", "changed_mind"],
+          "windowDays": 30,
+          "windowStartsOn": "delivery",
+          "resolution": "refund",
+          "returnShipping": "prepaid_label"
+        },
+        {
+          "id": "R4-HOME",
+          "summary": "Home and kitchen items can be returned within 30 days of delivery.",
+          "categories": ["home", "kitchen"],
+          "reasons": ["defective", "changed_mind"],
+          "windowDays": 30,
+          "windowStartsOn": "delivery",
+          "resolution": "refund",
+          "returnShipping": "prepaid_label"
+        }
+      ]
+    }
+  ],
+  "submissionScript": [
+    {
+      "outcome": "timeout_after_commit",
+      "note": "Flagship demo: the first submission reaches the retailer but the response is lost."
+    }
+  ],
+  "readsBeforeAuthorized": 1
+}
