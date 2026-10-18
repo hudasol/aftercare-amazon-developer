@@ -35,6 +35,9 @@ async function main(): Promise<void> {
     console.info(`  Resolution Lab     ${base}/lab`);
     console.info(`  MCP endpoint       ${base}/mcp  (Streamable HTTP, protocol 2025-11-25)`);
     console.info(`  Database           ${config.DATABASE_PATH}`);
+    if (config.AFTERCARE_PUBLIC_DEMO && !config.AFTERCARE_ACCESS_TOKEN) {
+      console.warn('  Public demo mode: /api and /mcp accept unauthenticated requests.');
+    }
   });
   server.on('error', (error) => {
     console.error(`Could not start the server: ${error.message}`);
