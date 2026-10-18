@@ -55,13 +55,31 @@ Configuration is optional. See [`.env.example`](.env.example); a `.env` file is 
 
 ## Deployment
 
+### Live demo
+
+| Surface           | URL                                       |
+| ----------------- | ----------------------------------------- |
+| Assistant surface | https://aftercare-mxfm.onrender.com/      |
+| Resolution Lab    | https://aftercare-mxfm.onrender.com/lab   |
+| MCP endpoint      | `https://aftercare-mxfm.onrender.com/mcp` |
+
+No token or account is needed. Every record is fictional, and the Lab's reset button (or `POST /api/demo/reset`) restores the starting state. Try it with the official MCP client:
+
+```bash
+npm run mcp:smoke -- https://aftercare-mxfm.onrender.com/mcp
+```
+
+It runs on Render's free plan (Virginia) and redeploys from `main` automatically. **After 15 minutes without traffic the service sleeps, and the next request takes about a minute.** There is no persistent disk, so cases reset whenever it sleeps or redeploys. See [Known limitations](docs/KNOWN_LIMITATIONS.md).
+
+### Running your own
+
 AFTERCARE is one Node.js 24 process with a SQLite file. Nothing else is needed.
 
 1. `npm ci && npm run build`
 2. Set `HOST=0.0.0.0`, a `PORT`, and `AFTERCARE_ACCESS_TOKEN` (16+ characters; the server refuses to listen on a non-loopback address without it). Set `AFTERCARE_ALLOWED_ORIGINS` to the public origin, and `DATABASE_PATH` to a persistent disk.
 3. `npm start`. MCP clients then call `https://<host>/mcp` with `Authorization: Bearer <token>`.
 
-It has not been deployed to a public URL from this repository; see [Known limitations](docs/KNOWN_LIMITATIONS.md).
+The web app does not send a token, so a token-protected deployment serves MCP clients only. The live demo instead sets `AFTERCARE_PUBLIC_DEMO=true`, which allows a public `HOST` without a token. That is acceptable only because all data is fictional; see [the threat model](docs/THREAT_MODEL.md).
 
 ## How it works
 
