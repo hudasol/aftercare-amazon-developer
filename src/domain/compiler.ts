@@ -416,7 +416,10 @@ export function compileCase(input: CompilerInput): Assessment {
     missing.push({
       id: 'item_serial',
       label: 'Serial number of the item',
-      why: 'You have more than one matching order, and they don’t all allow a return, so I need to know which one you have.',
+      why:
+        new Set(evaluations.map((e) => e.status)).size > 1
+          ? 'You have more than one matching order, and they don’t all allow a return, so I need to know which one you have.'
+          : 'You have more than one matching order, so I need to know which one you have before starting a return.',
       obtainableFrom: 'customer',
       blocking: true,
     });
