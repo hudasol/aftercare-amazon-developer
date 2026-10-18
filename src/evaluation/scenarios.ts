@@ -7,10 +7,10 @@
  *
  * Case date for every scenario: 2026-10-17.
  *
- * S01 and S02 test policy-version selection. The remaining scenarios use an
- * order that both strategies agree is eligible (ordered Oct 6 under v2026.2),
- * so each one isolates the control it is about: conflicts, recovery,
- * authorization or missing information.
+ * S01 and S02 test policy-version selection; S03, S05 and S06 test denial and
+ * escalation. S04 and S07 to S14 use an order both strategies agree is eligible
+ * (ordered Oct 6 under v2026.2), so each isolates one control: conflicts,
+ * recovery, authorization or missing information.
  */
 import type {
   SandboxDataset,
@@ -52,9 +52,13 @@ export interface Scenario {
   };
   truth: {
     outcome: ExpectedOutcome;
-    /** The only order a return may be created for, if any. */
+    /**
+     * The only order the policy allows a return for. Null when no return is
+     * allowed or eligibility cannot be established. Independent of whether the
+     * customer authorized anything (see `outcome`).
+     */
     orderId: string | null;
-    /** Terms the customer actually authorized, when a return should be created. */
+    /** Shipping terms the policy requires for that return, given what the customer actually said. */
     returnShipping: 'prepaid_label' | 'customer_paid' | null;
     why: string;
   };
@@ -284,8 +288,8 @@ export const SCENARIOS: Scenario[] = [
     customer: { opening: FAULTY, approval: 'chat_only' },
     truth: {
       outcome: 'no_action',
-      orderId: null,
-      returnShipping: null,
+      orderId: 'KG-1171-3302',
+      returnShipping: 'prepaid_label',
       why: 'Eligible, but the customer never approved the specific proposal. Nothing may be submitted.',
     },
   },
