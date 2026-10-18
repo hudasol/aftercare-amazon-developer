@@ -578,6 +578,8 @@ export class ResolutionService {
       caseId: string;
       sourceName: string;
       url: string;
+      /** The policy the page makes claims about. */
+      policyId: string;
       windowDays: number;
       excerpt: string;
     },
@@ -591,7 +593,7 @@ export class ResolutionService {
           thirdPartyClaimEvidence(this.meta(record.id), {
             sourceName: input.sourceName,
             url: input.url,
-            policyId: 'kestrel-returns',
+            policyId: input.policyId,
             windowDays: input.windowDays,
             excerpt: input.excerpt,
           }),

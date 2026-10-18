@@ -72,6 +72,7 @@ export function createContainer(options: ContainerOptions) {
     service,
     clock,
     demoCustomer: options.demoCustomer,
+    policyId: dataset.retailer.policyId,
     dataset,
   });
 
