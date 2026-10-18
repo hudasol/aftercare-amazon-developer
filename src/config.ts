@@ -12,6 +12,15 @@ const ConfigSchema = z.object({
   AFTERCARE_DEMO_CUSTOMER: z.string().default('cus_demo_maya'),
   /** When set, /api and /mcp require "Authorization: Bearer <token>". Required when HOST is not loopback. */
   AFTERCARE_ACCESS_TOKEN: z.string().min(16).optional(),
+  /**
+   * Allows a non-loopback HOST without AFTERCARE_ACCESS_TOKEN, for the hosted judging demo.
+   * Only safe because every record is fictional and the web app sends no token; never set
+   * it for real customer data.
+   */
+  AFTERCARE_PUBLIC_DEMO: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
   /** Extra browser origins allowed to call /mcp and /api (comma-separated). */
   AFTERCARE_ALLOWED_ORIGINS: z.string().default(''),
   /** Overrides the pinned demo case date (YYYY-MM-DD). */
@@ -38,9 +47,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   }
   const config = parsed.data;
   const loopback = ['127.0.0.1', 'localhost', '::1'].includes(config.HOST);
-  if (!loopback && !config.AFTERCARE_ACCESS_TOKEN) {
+  if (!loopback && !config.AFTERCARE_ACCESS_TOKEN && !config.AFTERCARE_PUBLIC_DEMO) {
     throw new Error(
-      'Refusing to listen on a non-loopback address without AFTERCARE_ACCESS_TOKEN. Set a token of 16+ characters.',
+      'Refusing to listen on a non-loopback address without AFTERCARE_ACCESS_TOKEN. Set a token of 16+ characters, or AFTERCARE_PUBLIC_DEMO=true for a fictional-data public demo.',
     );
   }
   return config;
