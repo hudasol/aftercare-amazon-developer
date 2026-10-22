@@ -40,6 +40,16 @@ const ConfigSchema = z.object({
   AFTERCARE_LLM_TIMEOUT_MS: z.coerce.number().int().min(100).max(60_000).default(8000),
   SANDBOX_LATENCY_MS: z.coerce.number().int().min(0).max(10_000).default(250),
   SANDBOX_TIMEOUT_MS: z.coerce.number().int().min(0).max(30_000).default(1500),
+  /** Requests per client per minute on /mcp and /api; 0 turns the limit off. */
+  AFTERCARE_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(0).max(100_000).default(600),
+  /**
+   * Take the client address for the rate limit from the last X-Forwarded-For
+   * entry. Defaults to true on Render (which sets RENDER=true) and false elsewhere.
+   */
+  AFTERCARE_TRUST_PROXY: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
   /** Serve the built web app from web/dist. */
   SERVE_WEB: z
     .enum(['true', 'false'])
@@ -50,7 +60,10 @@ const ConfigSchema = z.object({
 export type Config = z.infer<typeof ConfigSchema>;
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
-  const parsed = ConfigSchema.safeParse(env);
+  const parsed = ConfigSchema.safeParse({
+    ...(env['RENDER'] === 'true' ? { AFTERCARE_TRUST_PROXY: 'true' } : {}),
+    ...env,
+  });
   if (!parsed.success) {
     const problems = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
     throw new Error(`Invalid configuration: ${problems}`);

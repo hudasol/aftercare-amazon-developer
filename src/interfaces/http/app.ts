@@ -14,6 +14,7 @@ import type { Container } from '../../container.js';
 import { SUBMISSION_OUTCOMES } from '../../application/demo-service.js';
 import { DomainError, type DomainErrorCode } from '../../domain/errors.js';
 import { buildMcpServer } from '../mcp/tools.js';
+import { rateLimit } from './rate-limit.js';
 
 const WEB_DIST = fileURLToPath(new URL('../../../web/dist', import.meta.url));
 const EVALUATION_RESULTS = fileURLToPath(
@@ -92,7 +93,11 @@ export function createHttpApp(container: Container, config: Config, logger: Logg
     next();
   };
 
-  app.use(['/mcp', '/api'], guard, express.json({ limit: '64kb' }));
+  const limiter = rateLimit({
+    perMinute: config.AFTERCARE_RATE_LIMIT_PER_MINUTE,
+    trustProxy: config.AFTERCARE_TRUST_PROXY,
+  });
+  app.use(['/mcp', '/api'], limiter, guard, express.json({ limit: '64kb' }));
 
   // ---- MCP (Streamable HTTP, stateless: a fresh server and transport per request) ----
   app.post('/mcp', async (req: Request, res: Response) => {

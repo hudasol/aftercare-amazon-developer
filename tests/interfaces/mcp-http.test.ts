@@ -31,6 +31,7 @@ async function listen(token?: string): Promise<{ server: Server; port: number }>
     PORT: String(p),
     HOST: '127.0.0.1',
     SERVE_WEB: 'false',
+    AFTERCARE_RATE_LIMIT_PER_MINUTE: '0',
     ...(token ? { AFTERCARE_ACCESS_TOKEN: token } : {}),
   });
   return new Promise((resolve) => {

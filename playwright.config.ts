@@ -30,6 +30,7 @@ export default defineConfig({
       DATABASE_PATH: 'var/e2e/aftercare-e2e.db',
       SANDBOX_LATENCY_MS: '60',
       SANDBOX_TIMEOUT_MS: '300',
+      AFTERCARE_RATE_LIMIT_PER_MINUTE: '0',
     },
   },
 });
