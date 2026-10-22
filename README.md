@@ -42,14 +42,15 @@ npm start          # http://127.0.0.1:8787
 
 Other commands:
 
-| Command             | What it does                                                                           |
-| ------------------- | -------------------------------------------------------------------------------------- |
-| `npm run db:reset`  | Restore the demo's starting state (removes demo cases, reseeds the fictional retailer) |
-| `npm run dev`       | Server with reload plus the Vite dev server on http://127.0.0.1:5173                   |
-| `npm run mcp:smoke` | Connect to a running server with the official MCP client, list tools, open a case      |
-| `npm run eval`      | Rerun the evaluation and regenerate its results                                        |
-| `npm run check`     | Type-check, lint, format check, unit and integration tests                             |
-| `npm run test:e2e`  | Playwright end-to-end tests (run `npx playwright install chromium` once)               |
+| Command                     | What it does                                                                              |
+| --------------------------- | ----------------------------------------------------------------------------------------- |
+| `npm run db:reset`          | Restore the demo's starting state (removes demo cases, reseeds the fictional retailer)    |
+| `npm run dev`               | Server with reload plus the Vite dev server on http://127.0.0.1:5173                      |
+| `npm run mcp:smoke`         | Connect to a running server with the official MCP client, list tools, open a case         |
+| `npm run eval`              | Rerun the evaluation and regenerate its results                                           |
+| `npm run eval:interpreters` | Compare the rules interpreter with the optional model interpreter on 30 labelled messages |
+| `npm run check`             | Type-check, lint, format check, unit and integration tests                                |
+| `npm run test:e2e`          | Playwright end-to-end tests (run `npx playwright install chromium` once)                  |
 
 Configuration is optional. See [`.env.example`](.env.example); a `.env` file is read if present.
 
@@ -102,9 +103,26 @@ flowchart LR
 - **Resolution Compiler** (`src/domain/compiler.ts`): a pure function from case state to one justified next step. It resolves facts with an explicit authority policy, picks the governing policy version, and tests unresolved conflicts for whether they change the decision. It evaluates every candidate action's preconditions and asks only for information that matters. Every assessment is validated against a schema and cross-field invariants before use.
 - **Execution safety:** scoped approvals by digest, a write-ahead operation record, reconciliation before any retry, the same idempotency key across retries, and postcondition verification before "confirmed".
 - **Persistence:** SQL migrations, transactional writes, an event per significant step, and restart recovery for interrupted submissions.
-- **No model in the decision path.** Language is interpreted by a deterministic rules interpreter behind a port; decisions never depend on generated text.
+- **No model in the decision path.** By default a deterministic rules interpreter reads the customer's words. An optional language model can read them instead (see below), but its output is only ever a customer claim; decisions never depend on generated text.
 
 Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+### Optional model interpreter
+
+Off by default: with no settings, no model is called, and that is how the hosted demo runs. To let a language model read customer messages, point AFTERCARE at any OpenAI compatible chat completions endpoint:
+
+```bash
+AFTERCARE_LLM_BASE_URL=http://localhost:11434/v1 AFTERCARE_LLM_MODEL=qwen2.5:3b-instruct npm start
+```
+
+Free ways to run it: a local [Ollama](https://ollama.com) server (no key, as above), or a free tier key from any provider with an OpenAI compatible endpoint (`AFTERCARE_LLM_API_KEY`). Free tiers change; check the provider's current terms.
+
+- Only the customer's message is sent. No order or case data leaves the server.
+- The model may supply the goal, reason, product, issue description and purchase time. Serial and order numbers always come from the rules interpreter, so an identifier the model makes up can never enter a case. Agreement in chat is still never approval.
+- The reply must be JSON of the expected shape. Invalid output, an HTTP error or a timeout (`AFTERCARE_LLM_TIMEOUT_MS`, 8 seconds by default) falls back to the rules interpreter, and the Lab timeline shows which interpreter read each message (`llm@1` or `rules@1`, with the fallback reason).
+- A small local model on a laptop CPU can take several seconds per message and longer on its first call; raise the timeout if it keeps falling back.
+
+On 30 hand labelled messages, the rules interpreter read all four scored fields correctly on 16 and the model assisted interpreter with qwen2.5:3b-instruct on 22. The model was better on the reason and worse on the goal, and it stated a reason the customer did not give on 2 messages. Details and every miss: [docs/INTERPRETER_EVALUATION.md](docs/INTERPRETER_EVALUATION.md).
 
 ### MCP tools
 
@@ -114,7 +132,7 @@ Each returns typed `structuredContent` with a short `speech` line for voice and 
 
 ## Measured results
 
-22 hand-labelled synthetic scenarios, each run against AFTERCARE and two simpler agents with the same tools. The baseline has none of the controls. The careful baseline selects the policy version by order date, reuses one request key across retries and reads the return back before confirming, but has no approval digest, no rule for conflicting evidence and no case state machine. Scores come from the simulated retailer's own records, judged after it has finished processing.
+22 hand labelled synthetic scenarios, each run against AFTERCARE and two simpler agents with the same tools. The baseline has none of the controls. The careful baseline selects the policy version by order date, reuses one request key across retries and reads the return back before confirming, but has no approval digest, no rule for conflicting evidence and no case state machine. Scores come from the simulated retailer's own records, judged after it has finished processing.
 
 |                               |   AFTERCARE | Baseline | Careful baseline |
 | ----------------------------- | ----------: | -------: | ---------------: |
@@ -129,7 +147,7 @@ Each returns typed `structuredContent` with a short `speech` line for voice and 
 | Duplicate submission attempts |           0 |        2 |                0 |
 | Confirmed before verifying    |           0 |       10 |                0 |
 
-S01 to S14 are the original set; their results for AFTERCARE and the baseline are unchanged. S15 to S22 were added later, with labels committed before any run. These are behaviour tests on a small synthetic set written by the same team, not statistical estimates. The baselines are reference points, not measurements of any particular LLM. "Confirmed before verifying" counts claims made before checking; in this sandbox those returns were later authorized. Definitions, per-scenario results and limitations are in [docs/EVALUATION.md](docs/EVALUATION.md).
+S01 to S14 are the original set; their results for AFTERCARE and the baseline are unchanged. S15 to S22 were added later, with labels committed before any run. These are behaviour tests on a small synthetic set written by the same team, not statistical estimates. The baselines are reference points, not measurements of any particular LLM. "Confirmed before verifying" counts claims made before checking; in this sandbox those returns were later authorized. Definitions, per scenario results and limitations are in [docs/EVALUATION.md](docs/EVALUATION.md).
 
 ## Tests
 
@@ -141,9 +159,9 @@ S01 to S14 are the original set; their results for AFTERCARE and the baseline ar
 ```
 src/domain/          compiler, evidence & authority, policies, lifecycle, actions, verification
 src/application/     use cases, ports, evidence factory, read models, demo controls
-src/infrastructure/  SQLite repository, retailer sandbox, rules interpreter
+src/infrastructure/  SQLite repository, retailer sandbox, rules and optional model interpreters
 src/interfaces/      HTTP app and MCP tools
-src/evaluation/      scenarios, baseline, harness
+src/evaluation/      scenarios, baselines, harness, interpreter evaluation
 web/                 assistant surface and Resolution Lab (React, Vite)
 migrations/          SQL schema
 data/seed/           fictional retailer, orders and policies
@@ -157,9 +175,11 @@ docs/                requirements, architecture, threat model, evaluation, demo 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Threat model](docs/THREAT_MODEL.md)
 - [Evaluation](docs/EVALUATION.md) and [generated results](docs/EVALUATION_RESULTS.md)
+- [Interpreter evaluation](docs/INTERPRETER_EVALUATION.md)
 - [Demo script](docs/DEMO_SCRIPT.md)
 - [Known limitations](docs/KNOWN_LIMITATIONS.md)
 - [Product feedback draft](docs/PRODUCT_FEEDBACK.md)
+- [Friction log](docs/FRICTION_LOG.md)
 - [Adversarial review findings and resolutions](docs/REVIEW_FINDINGS.md)
 
 ## License

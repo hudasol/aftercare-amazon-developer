@@ -18,7 +18,7 @@ flowchart LR
     R["/api: read API + demo controls"]
     S["ResolutionService<br/>use cases, per-case lock,<br/>transactions, events"]
     C["Resolution Compiler<br/>(pure, deterministic)"]
-    I["Interpreter port<br/>rules@1"]
+    I["Interpreter port<br/>rules@1, optional llm@1"]
     DB[("SQLite<br/>cases, evidence, assessments,<br/>proposals, approvals,<br/>operations, events")]
   end
 
@@ -50,7 +50,7 @@ The simulated retailer shares the SQLite file for convenience, but it lives in i
 | Interfaces     | `src/interfaces/{http,mcp}` | Transport, validation of untrusted input, error mapping, auth guard                                            | Application                                      |
 | Application    | `src/application`           | Use cases, evidence gathering, write-ahead operations, reconciliation, verification calls, events, read models | Domain, ports                                    |
 | Domain         | `src/domain`                | Case lifecycle, evidence and authority, policy rules, actions, the compiler, postcondition verification        | Nothing outside the domain (enforced by ESLint)  |
-| Infrastructure | `src/infrastructure`        | SQLite repository and migrations, retailer sandbox, rules interpreter                                          | Application ports, domain types                  |
+| Infrastructure | `src/infrastructure`        | SQLite repository and migrations, retailer sandbox, rules interpreter, optional model interpreter              | Application ports, domain types                  |
 | Evaluation     | `src/evaluation`            | Scenarios, baseline, harness                                                                                   | Everything above, used as a client               |
 
 `eslint.config.js` forbids imports from outer layers, and I/O modules such as `node:sqlite` and `express`, inside `src/domain`.
@@ -151,11 +151,11 @@ Each case tool returns `structuredContent` that matches its `outputSchema`, incl
 
 ## Key decisions
 
-| Decision                                | Why                                                                                          | Alternative rejected                                                |
-| --------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| Self-hosted MCP server (Route A)        | Explicitly accepted by the track rules; the tool boundary is what an assistant would call    | Pure web simulation shows less of the track technology              |
-| Spec 2025-11-25 with SDK v1             | The version the rules name; 2026-07-28 is "later, once confirmed", which has not happened    | SDK v2 / 2026-07-28                                                 |
-| Deterministic rules interpreter, no LLM | No model credentials in this environment; decisions must not depend on generated text anyway | An unverified LLM provider in the critical path                     |
-| Single process, SQLite                  | One command to run; real transactions and migrations                                         | Separate services and an external database                          |
-| Pinned case date (2026-10-17)           | Demo outcomes stay repeatable as real time passes                                            | Wall-clock dates, where the demo would silently change after Oct 30 |
-| Simulated retailer behind a port        | No real retailer access exists; the port keeps the boundary honest and testable              | Calling fake functions inline                                       |
+| Decision                                                 | Why                                                                                                                                                            | Alternative rejected                                                |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Self-hosted MCP server (Route A)                         | Explicitly accepted by the track rules; the tool boundary is what an assistant would call                                                                      | Pure web simulation shows less of the track technology              |
+| Spec 2025-11-25 with SDK v1                              | The version the rules name; 2026-07-28 is "later, once confirmed", which has not happened                                                                      | SDK v2 / 2026-07-28                                                 |
+| Rules interpreter by default, optional model interpreter | Works with zero keys; a model may read the customer's words but its output is only a claim, identifiers always come from the rules, and any failure falls back | A model deciding anything, or a required provider                   |
+| Single process, SQLite                                   | One command to run; real transactions and migrations                                                                                                           | Separate services and an external database                          |
+| Pinned case date (2026-10-17)                            | Demo outcomes stay repeatable as real time passes                                                                                                              | Wall-clock dates, where the demo would silently change after Oct 30 |
+| Simulated retailer behind a port                         | No real retailer access exists; the port keeps the boundary honest and testable                                                                                | Calling fake functions inline                                       |
