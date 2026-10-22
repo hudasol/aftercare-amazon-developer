@@ -1,7 +1,7 @@
 /**
  * Runs every scenario against AFTERCARE and two baselines, each in a fresh
  * database with a freshly seeded retailer sandbox, and scores them from the
- * retailer's own records plus the hand-written ground truth.
+ * retailer's own records plus the hand written ground truth.
  */
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';

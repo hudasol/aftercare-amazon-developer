@@ -2,7 +2,7 @@
 
 **Question:** do AFTERCARE's Resolution Compiler and execution controls change outcomes compared with simpler agents that have the same tools?
 
-**Answer on this scenario set:** yes, on all 22 scenarios. AFTERCARE reached the correct outcome in 22 of 22 with no safety violations. The baseline was correct in 11 of 22, and the careful baseline, which fixes the baseline's policy selection, retries and confirmation, in 16 of 22. The original 14 scenarios and the 8 added later (S15 to S22) are reported separately below. On the original 14 the results of AFTERCARE and the baseline are unchanged (14 and 7). Generated numbers are in [EVALUATION_RESULTS.md](EVALUATION_RESULTS.md), and machine-readable results are in [`data/evaluation/results.json`](../data/evaluation/results.json).
+**Answer on this scenario set:** yes, on all 22 scenarios. AFTERCARE reached the correct outcome in 22 of 22 with no safety violations. The baseline was correct in 11 of 22, and the careful baseline, which fixes the baseline's policy selection, retries and confirmation, in 16 of 22. The original 14 scenarios and the 8 added later (S15 to S22) are reported separately below. On the original 14 the results of AFTERCARE and the baseline are unchanged (14 and 7). Generated numbers are in [EVALUATION_RESULTS.md](EVALUATION_RESULTS.md), and machine readable results are in [`data/evaluation/results.json`](../data/evaluation/results.json).
 
 ## How to reproduce
 
@@ -141,7 +141,7 @@ AFTERCARE was correct on every added scenario. None of them exposed a defect, so
 
 ## Limitations of this evaluation
 
-- **Small and synthetic.** 22 hand-built scenarios on one fictional retailer and two product families. These are behavioural tests, not statistical estimates. No confidence intervals are claimed.
+- **Small and synthetic.** 22 hand built scenarios on one fictional retailer and two product families. These are behavioural tests, not statistical estimates. No confidence intervals are claimed.
 - **Written by the same team that built the system.** The ground truth is independent of the engine's code, but the scenario choice is not independent of the design. These are the behaviours AFTERCARE was built to handle. The 8 added scenarios were labelled before any run, but by the same team.
 - **The sandbox's realism is a modelling choice.** "Processing until read" and "one open return per item" are plausible retailer behaviours we chose. A different retailer would change some baseline counts.
 - **Not measured here:** latency, cost, customer satisfaction, and behaviour with a language model in the loop. All three strategies use the same rules interpreter. The optional model interpreter is measured separately, on field extraction only, in [INTERPRETER_EVALUATION.md](INTERPRETER_EVALUATION.md).

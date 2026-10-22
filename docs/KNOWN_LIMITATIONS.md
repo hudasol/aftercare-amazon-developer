@@ -10,7 +10,7 @@ The honest boundaries of what is built and verified.
 
 ## Approval over MCP
 
-- **The server cannot ask the human itself.** Approval over MCP is only as strong as the client that calls `approve_proposed_return` (see [THREAT_MODEL.md](THREAT_MODEL.md)). MCP elicitation would let the server ask the person to confirm the exact terms. A time boxed spike with SDK 1.32.1 showed it cannot work on this stateless endpoint: each request gets a new server that never saw `initialize`, so `elicitInput` reports that the client does not support elicitation; sending the request directly reaches the client over an SSE response, but the client's answer arrives as a new POST at a new server and the tool call times out. It works with a stateful session. That would mean in-memory sessions on the server, which do not survive a restart or the hosted instance sleeping, so it was not adopted. Approval is unchanged: an explicit tool call naming the proposal and its digest.
+- **The server cannot ask the human itself.** Approval over MCP is only as strong as the client that calls `approve_proposed_return` (see [THREAT_MODEL.md](THREAT_MODEL.md)). MCP elicitation would let the server ask the person to confirm the exact terms. A time boxed spike with SDK 1.32.1 showed it cannot work on this stateless endpoint: each request gets a new server that never saw `initialize`, so `elicitInput` reports that the client does not support elicitation; sending the request directly reaches the client over an SSE response, but the client's answer arrives as a new POST at a new server and the tool call times out. It works with a stateful session. That would mean in memory sessions on the server, which do not survive a restart or the hosted instance sleeping, so it was not adopted. Approval is unchanged: an explicit tool call naming the proposal and its digest.
 
 ## Language understanding
 
@@ -27,7 +27,7 @@ The honest boundaries of what is built and verified.
 ## Operational
 
 - A single process with an in-memory per-case lock. Horizontal scaling would rely on optimistic version checks and unique constraints only.
-- A simple in-memory rate limit per client address (600 requests per minute by default) on `/mcp` and `/api`. It resets on restart and does not stop a distributed load. The demo-control endpoints are not role-gated beyond the optional access token, and the hosted demo runs without one.
+- A simple in memory rate limit per client address (600 requests per minute by default) on `/mcp` and `/api`. It resets on restart and does not stop a distributed load. The demo control endpoints are not role gated beyond the optional access token, and the hosted demo runs without one.
 - **Hosting:** a live demo runs at https://aftercare-mxfm.onrender.com (MCP endpoint `/mcp`), deployed from `main` on Render's free plan. It is meant to stay up through the judging period (until Nov 20, 2026). Verified on 2026-10-18: `npm run mcp:smoke` against the live `/mcp` negotiated protocol 2025-11-25, listed all 10 tools and opened a case. In the browser, the full Return Rescue flow worked end to end: wrong serial rejected, chat agreement not taken as approval, outcome unknown, reconciled, verified, confirmed. An unlisted `Origin` gets 403. Limits of that hosting:
   - The free plan sleeps after 15 minutes without traffic. The first request after that takes about a minute while it wakes. The web app shows a waking notice and retries reads for up to about 90 seconds; an MCP client with a short timeout may still fail on its first call. A free external uptime monitor on `/api/health` keeps it awake, but it is set up by hand and is not part of the repository.
   - There is no persistent disk. The SQLite file lives on the instance's temporary filesystem, so cases are lost whenever the service sleeps, restarts or redeploys, and the fictional seed data comes back. Nothing a judge needs depends on earlier cases.
@@ -38,4 +38,4 @@ The honest boundaries of what is built and verified.
 
 ## Evaluation
 
-See the limitations section of [EVALUATION.md](EVALUATION.md): 14 synthetic scenarios, hand-labelled, with a deterministic baseline that is not an LLM.
+See the limitations section of [EVALUATION.md](EVALUATION.md): 22 synthetic scenarios, hand labelled, with two deterministic baselines that are not LLMs.

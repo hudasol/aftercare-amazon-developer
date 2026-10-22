@@ -1,5 +1,5 @@
 /**
- * A small in-memory rate limit for /mcp and /api, so one script cannot take
+ * A small in memory rate limit for /mcp and /api, so one script cannot take
  * the shared demo down. Fixed one minute windows per client address. It keeps
  * no state across restarts and is not meant for more than one process.
  */

@@ -1,5 +1,5 @@
 /**
- * Extended evaluation scenarios, S15 onwards, with hand-written ground truth.
+ * Extended evaluation scenarios, S15 onwards, with hand written ground truth.
  *
  * Written after the first 14, to cover cases they did not: window boundaries,
  * the day the policy changed, an unusual serial format, a change of mind stated
