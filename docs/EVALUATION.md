@@ -47,6 +47,16 @@ A deterministic tool-calling agent. It uses the same retailer gateway and the sa
 
 This baseline stands for a common, plausible design. **It is not a measurement of any particular LLM or product.** An LLM agent might do better or worse on any single behaviour. The comparison shows what each control prevents when it is absent.
 
+## The careful baseline
+
+A second deterministic agent, defined here before it was implemented or run, so the comparison does not rest on a baseline built to lose. It uses the same gateway and rules interpreter, and it fixes the three weaknesses of the first baseline that need no case model:
+
+- it selects the policy version by the order date, using each version's scope clause, instead of the currently published one;
+- it reuses one idempotency key for every attempt at the same submission, so a retry after a lost response cannot create a second return;
+- it reads the return back before telling the customer anything: it reports "confirmed" only when the retailer's record says authorized, "refused" when the retailer refuses the request or the record says refused, and otherwise stops without a claim. It reads up to 5 times and counts a read that times out as one of them. Like the first baseline, it makes up to 3 submission attempts.
+
+Everything else is the same as the first baseline. It has no explicit approval bound to a proposal digest (agreement in conversation counts as approval, and an approval is not withdrawn when the terms change), no authority policy for conflicting evidence (it uses the retailer's order record and ignores carrier scans), and no case state machine (it takes the most recent matching order and assumes "defective" when no reason is given).
+
 ## Metrics
 
 | Metric                        | Definition                                                                                                                                                        |
