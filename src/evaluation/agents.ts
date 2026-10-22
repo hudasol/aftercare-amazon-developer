@@ -1,5 +1,5 @@
 /**
- * The two strategies compared by the evaluation harness.
+ * The strategies compared by the evaluation harness.
  *
  * AFTERCARE: the real application service (Resolution Compiler and safety
  * controls), driven by a scripted customer.
@@ -261,4 +261,137 @@ export async function runBaseline(
     }
   }
   return { claim: 'failed', submissions, statusAtConfirmationClaim: null, steps };
+}
+
+// ---------------------------------------------------------------------------------------
+// Careful baseline
+// ---------------------------------------------------------------------------------------
+
+const MAX_READS = 5;
+
+/**
+ * The first baseline with three fixes that need no case model: the policy
+ * version is selected by order date, every attempt reuses one idempotency key,
+ * and the return is read back before anything is reported. It still has no
+ * approval digest, no authority policy for conflicting evidence and no state
+ * machine. Defined in docs/EVALUATION.md before it was run.
+ */
+export async function runCarefulBaseline(
+  container: Container,
+  scenario: Scenario,
+  caseDate: string,
+): Promise<Run> {
+  const gateway: RetailerGateway = container.sandbox;
+  const interpreter = new RulesInterpreter();
+  const c = scenario.customer;
+  const steps: string[] = [];
+  const submissions: Submission[] = [];
+  const stop = (claim: Claim, status: string | null = null): Run => ({
+    claim,
+    submissions,
+    statusAtConfirmationClaim: status,
+    steps,
+  });
+
+  const opening = await interpreter.interpret(c.opening);
+  const orders = await gateway.searchOrders(CUSTOMER, opening.productQuery);
+  const order = orders[0]; // most recent first
+  if (!order) {
+    steps.push('no order found');
+    return stop('denied');
+  }
+  steps.push(`picked most recent order ${order.orderId}`);
+
+  const policies = await gateway.listPolicyVersions();
+  const governing = policies.find(
+    (p) =>
+      compareDates(p.effectiveFrom, order.orderedOn) <= 0 &&
+      (p.effectiveTo === null || compareDates(order.orderedOn, p.effectiveTo) <= 0),
+  );
+  if (!governing) {
+    steps.push('no policy version covers the order date');
+    return stop('escalated');
+  }
+  const reason: ReturnReason = opening.reason ?? 'defective';
+  const rule =
+    governing.rules.find(
+      (r) => r.categories.includes(order.category) && r.reasons.includes(reason),
+    ) ?? governing.rules.find((r) => r.categories.includes(order.category));
+  steps.push(`applied v${governing.version} by order date, reason ${reason}`);
+  if (!rule || compareDates(caseDate, addDays(order.deliveredOn, rule.windowDays)) > 0) {
+    steps.push('outside window → denied');
+    return stop('denied');
+  }
+
+  const basis: Submission['basis'] =
+    c.approval === 'chat_only'
+      ? 'chat_agreement'
+      : c.afterApproval
+        ? 'earlier_approval_of_other_terms'
+        : 'explicit_current';
+  steps.push(
+    c.approval === 'chat_only' ? 'treated "yes, go ahead" as approval' : 'customer approved',
+  );
+  if (c.afterApproval)
+    steps.push('customer changed the reason after approving; already approved, so submitting');
+
+  const key = randomUUID(); // one request identity for every attempt
+  let accepted = false;
+  for (let attempt = 1; attempt <= 3 && !accepted; attempt++) {
+    submissions.push({
+      orderId: order.orderId,
+      returnShipping: rule.returnShipping,
+      basis,
+      idempotencyKey: key,
+    });
+    try {
+      const result = await gateway.createReturn({
+        idempotencyKey: key,
+        customerRef: CUSTOMER,
+        orderId: order.orderId,
+        lineId: order.lineId,
+        reason,
+        refundAmountCents: order.priceCents,
+        currency: order.currency,
+        returnShipping: rule.returnShipping,
+      });
+      if (result.kind === 'rejected') {
+        steps.push(`attempt ${attempt}: rejected (${result.reason})`);
+        return stop('refused');
+      }
+      if (result.kind === 'accepted') {
+        steps.push(`attempt ${attempt}: accepted → reading it back`);
+        accepted = true;
+      } else {
+        steps.push(`attempt ${attempt}: unavailable → retry with the same key`);
+      }
+    } catch (error) {
+      steps.push(
+        `attempt ${attempt}: ${error instanceof GatewayTimeoutError ? 'timeout' : 'error'} → retry with the same key`,
+      );
+    }
+  }
+
+  for (let read = 1; read <= MAX_READS; read++) {
+    try {
+      const found = await gateway.findReturnByIdempotencyKey(key);
+      if (!found) {
+        steps.push(`read ${read}: no return on file → failed`);
+        return stop('failed');
+      }
+      if (found.status === 'authorized') {
+        steps.push(`read ${read}: authorized → told customer it is confirmed`);
+        return stop('confirmed', 'authorized');
+      }
+      if (found.status === 'refused') {
+        steps.push(`read ${read}: refused`);
+        return stop('refused');
+      }
+      steps.push(`read ${read}: ${found.status}`);
+    } catch (error) {
+      steps.push(`read ${read}: ${error instanceof GatewayTimeoutError ? 'timeout' : 'error'}`);
+    }
+  }
+  steps.push('still not authorized → no claim');
+  return stop('pending');
 }
