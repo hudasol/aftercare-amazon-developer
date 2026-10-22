@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Mark } from './components/common';
 import { api } from './lib/api';
+import { onWakeState, wakeState, type WakeState } from './lib/wake';
 import { navigate, useRoute } from './lib/router';
 import type { Session } from './lib/types';
 import { AssistantView } from './views/AssistantView';
@@ -10,6 +11,9 @@ export function App() {
   const route = useRoute();
   const [session, setSession] = useState<Session | null>(null);
   const [offline, setOffline] = useState(false);
+  const [wake, setWake] = useState<WakeState>(wakeState());
+
+  useEffect(() => onWakeState(setWake), []);
 
   useEffect(() => {
     api
@@ -60,6 +64,12 @@ export function App() {
           {link('lab', 'Resolution Lab')}
         </nav>
       </header>
+      {wake === 'waking' && (
+        <p className="notice" role="status" style={{ margin: 16 }}>
+          Waking the demo, this can take about a minute. The free hosting plan pauses the server
+          when nobody is using it. This page continues on its own once the server answers.
+        </p>
+      )}
       {offline && (
         <p className="notice" role="alert" style={{ margin: 16 }}>
           The AFTERCARE server isn’t reachable. Start it with <code>npm start</code>, then reload

@@ -6,6 +6,11 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import type { ToolCaseResult } from './types';
+import { ensureAwake } from './wake';
+
+/** After this long without contact the hosted demo may have gone to sleep. */
+const IDLE_BEFORE_CHECK_MS = 5 * 60_000;
+let lastContact = 0;
 
 export class ToolError extends Error {
   constructor(
@@ -32,9 +37,11 @@ export function onToolCall(listener: (call: ToolCallRecord) => void): () => void
 }
 
 async function connect() {
+  await ensureAwake();
   const client = new Client({ name: 'aftercare-assistant-surface', version: '1.0.0' });
   const transport = new StreamableHTTPClientTransport(new URL('/mcp', window.location.origin));
   await client.connect(transport as never);
+  lastContact = Date.now();
   return { client, protocolVersion: transport.protocolVersion ?? 'unknown' };
 }
 
@@ -51,7 +58,10 @@ export async function callTool<T = ToolCaseResult>(
   args: Record<string, unknown>,
 ): Promise<T> {
   const { client } = await mcpConnection();
+  // A tool call is never repeated, so wake a sleeping server first with a harmless check.
+  if (Date.now() - lastContact > IDLE_BEFORE_CHECK_MS) await ensureAwake();
   const result = await client.callTool({ name: tool, arguments: args });
+  lastContact = Date.now();
   const at = new Date().toISOString();
   if (result.isError) {
     const text =

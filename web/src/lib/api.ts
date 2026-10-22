@@ -1,4 +1,5 @@
 import type { CaseSummary, CaseView, EvaluationResults, SandboxState, Session } from './types';
+import { isWakeFailure, retryWhileWaking, WAKE_STATUSES } from './wake';
 
 export class ApiError extends Error {
   constructor(
@@ -10,7 +11,22 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+/** A failure caused by the demo server still starting, rather than by the request. */
+function serverWaking(error: unknown): boolean {
+  return (
+    isWakeFailure(error) ||
+    (error instanceof ApiError &&
+      (WAKE_STATUSES.has(error.status) || error.code === 'bad_response'))
+  );
+}
+
+/** Reads are retried while the demo server wakes; changes are never repeated. */
+function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const once = () => send<T>(path, init);
+  return (init?.method ?? 'GET') === 'GET' ? retryWhileWaking(once, serverWaking) : once();
+}
+
+async function send<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
     ...init,
     headers: { 'content-type': 'application/json', ...(init?.headers ?? {}) },
