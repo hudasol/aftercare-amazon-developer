@@ -34,6 +34,8 @@ export interface Scenario {
   orders: SeedOrder[];
   carrierScans?: SandboxDataset['carrierScans'];
   submissionScript: SubmissionOutcome[];
+  /** Scripted answers to return lookups, in order; unscripted lookups answer normally. */
+  lookupScript?: ('ok' | 'timeout')[];
   customer: {
     opening: string;
     /** Serial the customer reads off the item if asked. */
@@ -64,7 +66,7 @@ export interface Scenario {
   };
 }
 
-const HEADPHONES = {
+export const HEADPHONES = {
   customerRef: 'cus_demo_maya',
   lineId: 'L1',
   productName: 'Halden Aria wireless headphones',
@@ -76,28 +78,28 @@ const HEADPHONES = {
   serialLocation: 'inside the left ear cup, under the cushion',
 };
 
-const OLD_PAIR: SeedOrder = {
+export const OLD_PAIR: SeedOrder = {
   ...HEADPHONES,
   orderId: 'KG-1140-2207',
   orderedOn: '2026-07-27',
   deliveredOn: '2026-07-31',
   serialNumbers: ['HA-7Q2-0193'],
 };
-const NEW_PAIR: SeedOrder = {
+export const NEW_PAIR: SeedOrder = {
   ...HEADPHONES,
   orderId: 'KG-1162-5821',
   orderedOn: '2026-09-26',
   deliveredOn: '2026-09-30',
   serialNumbers: ['HA-7Q2-4471'],
 };
-const OCT_PAIR: SeedOrder = {
+export const OCT_PAIR: SeedOrder = {
   ...HEADPHONES,
   orderId: 'KG-1171-3302',
   orderedOn: '2026-10-06',
   deliveredOn: '2026-10-08',
   serialNumbers: ['HA-7Q2-6120'],
 };
-const OCT1_PAIR: SeedOrder = {
+export const OCT1_PAIR: SeedOrder = {
   ...HEADPHONES,
   orderId: 'KG-1166-0410',
   orderedOn: '2026-10-01',
@@ -105,7 +107,7 @@ const OCT1_PAIR: SeedOrder = {
   serialNumbers: ['HA-7Q2-5508'],
 };
 
-const FAULTY =
+export const FAULTY =
   'My wireless headphones keep disconnecting. I bought them recently. Can you help me return them?';
 
 export const SCENARIOS: Scenario[] = [
