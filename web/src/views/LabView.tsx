@@ -896,6 +896,9 @@ function TimelinePanel({ events }: { events: EventRecord[] }) {
               <span>
                 {e.summary}
                 <span className="tl-type">{e.type}</span>
+                {typeof e.data?.['interpreter'] === 'string' && (
+                  <span className="tl-type">read by {e.data['interpreter']}</span>
+                )}
               </span>
             </li>
           ))}
