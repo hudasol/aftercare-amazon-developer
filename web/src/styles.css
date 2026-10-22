@@ -1594,6 +1594,10 @@ a {
   background: var(--ink);
 }
 
+.bar[data-agent='careful'] .bar-fill {
+  background: var(--violet);
+}
+
 .bar-value {
   text-align: right;
   font-weight: 700;

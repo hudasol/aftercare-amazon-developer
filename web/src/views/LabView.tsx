@@ -994,19 +994,32 @@ function Comparison({ results }: { results: EvaluationResults }) {
   const n = results.scenarioCount;
   return (
     <section className="panel" aria-label="Measured comparison">
-      <h2>Measured: AFTERCARE against a baseline, {n} scenarios</h2>
+      <h2>Measured: AFTERCARE against two baselines, {n} scenarios</h2>
       <p className="fine" style={{ marginBottom: 16, maxWidth: '90ch' }}>
         Produced by <code>npm run eval</code> from this repository: {n} synthetic scenarios on the
         fictional retailer, with hand-labelled expected outcomes. These are behaviour tests, not
         statistical estimates. Counts are numbers of scenarios (duplicate attempts and extra returns
-        count events). {results.baselineDefinition}
+        count events).{' '}
+        {results.sets
+          .map(
+            (set) =>
+              `${set.label} (${set.scenarioIds[0] ?? ''} to ${set.scenarioIds.at(-1) ?? ''}): AFTERCARE ${set.totals.aftercare.outcomeCorrect}, baseline ${set.totals.baseline.outcomeCorrect}, careful baseline ${set.totals.careful.outcomeCorrect} of ${set.scenarioIds.length} correct.`,
+          )
+          .join(' ')}
+      </p>
+      <p className="fine" style={{ marginBottom: 16, maxWidth: '90ch' }}>
+        Baseline: {results.baselineDefinition}
+      </p>
+      <p className="fine" style={{ marginBottom: 16, maxWidth: '90ch' }}>
+        Careful baseline: {results.carefulBaselineDefinition}
       </p>
       <div className="comparison">
         <div>
           {METRICS.map((m) => {
             const av = results.totals.aftercare[m.key];
             const bv = results.totals.baseline[m.key];
-            const max = Math.max(n, av, bv, 1);
+            const cv = results.totals.careful[m.key];
+            const max = Math.max(n, av, bv, cv, 1);
             return (
               <div className="metric-row" key={m.key}>
                 <span>
@@ -1020,6 +1033,7 @@ function Comparison({ results }: { results: EvaluationResults }) {
                     [
                       ['aftercare', 'AFTERCARE', av],
                       ['baseline', 'Baseline', bv],
+                      ['careful', 'Careful', cv],
                     ] as const
                   ).map(([id, label, v]) => (
                     <div className="bar" data-agent={id} key={id}>
@@ -1046,6 +1060,7 @@ function Comparison({ results }: { results: EvaluationResults }) {
                 <th>Expected</th>
                 <th>AFTERCARE</th>
                 <th>Baseline</th>
+                <th>Careful baseline</th>
               </tr>
             </thead>
             <tbody>
@@ -1060,6 +1075,9 @@ function Comparison({ results }: { results: EvaluationResults }) {
                   </td>
                   <td className={s.baseline.metrics.outcomeCorrect ? 'mark-ok' : 'mark-bad'}>
                     {sentence(s.baseline.claim)} {s.baseline.metrics.outcomeCorrect ? '✓' : '✗'}
+                  </td>
+                  <td className={s.careful.metrics.outcomeCorrect ? 'mark-ok' : 'mark-bad'}>
+                    {sentence(s.careful.claim)} {s.careful.metrics.outcomeCorrect ? '✓' : '✗'}
                   </td>
                 </tr>
               ))}

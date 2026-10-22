@@ -116,7 +116,7 @@ test('the Lab drives the scenario through MCP and introduces conflicts', async (
 
   // The measured comparison is rendered from the committed evaluation results.
   await expect(
-    page.getByRole('heading', { name: /AFTERCARE against a baseline, 14 scenarios/ }),
+    page.getByRole('heading', { name: /AFTERCARE against two baselines, 22 scenarios/ }),
   ).toBeVisible();
 });
 
