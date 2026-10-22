@@ -8,10 +8,14 @@ The honest boundaries of what is built and verified.
 - **No real retailer, carrier or payment system.** Kestrel Goods, its policies, orders, serial numbers, labels and refunds are fictional and simulated in `sim_*` tables. Nothing real is ever created.
 - **No customer authentication or account linking.** The server acts for one configured fictional customer. See [THREAT_MODEL.md](THREAT_MODEL.md).
 
+## Approval over MCP
+
+- **The server cannot ask the human itself.** Approval over MCP is only as strong as the client that calls `approve_proposed_return` (see [THREAT_MODEL.md](THREAT_MODEL.md)). MCP elicitation would let the server ask the person to confirm the exact terms. A time boxed spike with SDK 1.32.1 showed it cannot work on this stateless endpoint: each request gets a new server that never saw `initialize`, so `elicitInput` reports that the client does not support elicitation; sending the request directly reaches the client over an SSE response, but the client's answer arrives as a new POST at a new server and the tool call times out. It works with a stateful session. That would mean in-memory sessions on the server, which do not survive a restart or the hosted instance sleeping, so it was not adopted. Approval is unchanged: an explicit tool call naming the proposal and its digest.
+
 ## Language understanding
 
-- **Rules-based interpreter only.** No language model is called. There were no model credentials in the build environment, and decisions are designed not to depend on generated text. The `Interpreter` port lets a model-backed implementation be added, with the rules interpreter as fallback. That implementation is not built.
-- The interpreter recognizes a limited vocabulary: return or exchange intent, common fault phrases, change-of-mind phrases, a handful of product nouns, serial and order-number formats. Unusual phrasing may be missed. The compiler then asks for the missing item rather than guessing.
+- **The model is optional and off by default.** With no settings, the rules interpreter reads every message and no language model is called, which is how the hosted demo runs. An optional model assisted interpreter (any OpenAI compatible endpoint, for example a local Ollama server) can read goal, reason, product, issue and purchase time; serial and order numbers always come from the rules. It was measured on 30 hand labelled messages with one small local model only ([INTERPRETER_EVALUATION.md](INTERPRETER_EVALUATION.md)): better on the reason, worse on the goal, and it sometimes stated a reason the customer did not give. A small local model can be slow on its first call; a reply after the timeout (8 seconds by default) falls back to the rules interpreter.
+- The rules interpreter recognizes a limited vocabulary: return or exchange intent, common fault phrases, change of mind phrases, a handful of product nouns, serial and order number formats. Unusual phrasing may be missed. The compiler then asks for the missing item rather than guessing.
 
 ## Product scope
 
