@@ -1,0 +1,436 @@
+{
+  "date": "2026-10-22",
+  "messages": 30,
+  "model": "qwen2.5:3b-instruct",
+  "rules": {
+    "interpreter": "rules@1",
+    "correct": {
+      "goal": 29,
+      "reason": 18,
+      "product": 28,
+      "timeHint": 30
+    },
+    "allFieldsCorrect": 16,
+    "fallbacks": 0,
+    "items": [
+      {
+        "id": "P01",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "wireless headphones"
+      },
+      {
+        "id": "P02",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "wireless headphones"
+      },
+      {
+        "id": "P03",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "pour-over set"
+      },
+      {
+        "id": "P04",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "headset"
+      },
+      {
+        "id": "P05",
+        "missed": [
+          "product"
+        ],
+        "fallback": null,
+        "productQuery": null
+      },
+      {
+        "id": "P06",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "bluetooth headphones"
+      },
+      {
+        "id": "P07",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "headphones"
+      },
+      {
+        "id": "P08",
+        "missed": [
+          "reason"
+        ],
+        "fallback": null,
+        "productQuery": "headphones"
+      },
+      {
+        "id": "P09",
+        "missed": [
+          "reason",
+          "product"
+        ],
+        "fallback": null,
+        "productQuery": null
+      },
+      {
+        "id": "P10",
+        "missed": [
+          "reason"
+        ],
+        "fallback": null,
+        "productQuery": "pour-over"
+      },
+      {
+        "id": "P11",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "headphones"
+      },
+      {
+        "id": "P12",
+        "missed": [],
+        "fallback": null,
+        "productQuery": null
+      },
+      {
+        "id": "P13",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "headphones"
+      },
+      {
+        "id": "P14",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "kettle"
+      },
+      {
+        "id": "P15",
+        "missed": [
+          "reason"
+        ],
+        "fallback": null,
+        "productQuery": "headphones"
+      },
+      {
+        "id": "P16",
+        "missed": [
+          "reason"
+        ],
+        "fallback": null,
+        "productQuery": "headphones"
+      },
+      {
+        "id": "P17",
+        "missed": [],
+        "fallback": null,
+        "productQuery": null
+      },
+      {
+        "id": "P18",
+        "missed": [
+          "reason"
+        ],
+        "fallback": null,
+        "productQuery": "headphones"
+      },
+      {
+        "id": "P19",
+        "missed": [
+          "reason"
+        ],
+        "fallback": null,
+        "productQuery": "coffee set"
+      },
+      {
+        "id": "P20",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "headphones"
+      },
+      {
+        "id": "P21",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "headphones"
+      },
+      {
+        "id": "P22",
+        "missed": [
+          "reason"
+        ],
+        "fallback": null,
+        "productQuery": "pour over set"
+      },
+      {
+        "id": "P23",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "headphones"
+      },
+      {
+        "id": "P24",
+        "missed": [
+          "goal"
+        ],
+        "fallback": null,
+        "productQuery": "headphones"
+      },
+      {
+        "id": "P25",
+        "missed": [],
+        "fallback": null,
+        "productQuery": null
+      },
+      {
+        "id": "P26",
+        "missed": [
+          "reason"
+        ],
+        "fallback": null,
+        "productQuery": "headset"
+      },
+      {
+        "id": "P27",
+        "missed": [
+          "reason"
+        ],
+        "fallback": null,
+        "productQuery": "headphones"
+      },
+      {
+        "id": "P28",
+        "missed": [
+          "reason"
+        ],
+        "fallback": null,
+        "productQuery": "pour-over set"
+      },
+      {
+        "id": "P29",
+        "missed": [],
+        "fallback": null,
+        "productQuery": null
+      },
+      {
+        "id": "P30",
+        "missed": [
+          "reason"
+        ],
+        "fallback": null,
+        "productQuery": "headphones"
+      }
+    ]
+  },
+  "modelAssisted": {
+    "interpreter": "llm@1",
+    "correct": {
+      "goal": 26,
+      "reason": 27,
+      "product": 29,
+      "timeHint": 30
+    },
+    "allFieldsCorrect": 22,
+    "fallbacks": 1,
+    "items": [
+      {
+        "id": "P01",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "wireless headphones"
+      },
+      {
+        "id": "P02",
+        "missed": [
+          "reason"
+        ],
+        "fallback": null,
+        "productQuery": "wireless headphones"
+      },
+      {
+        "id": "P03",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "pour-over set"
+      },
+      {
+        "id": "P04",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "headset"
+      },
+      {
+        "id": "P05",
+        "missed": [
+          "product"
+        ],
+        "fallback": null,
+        "productQuery": "earbuds"
+      },
+      {
+        "id": "P06",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "bluetooth headphones"
+      },
+      {
+        "id": "P07",
+        "missed": [
+          "goal"
+        ],
+        "fallback": null,
+        "productQuery": "headphones"
+      },
+      {
+        "id": "P08",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "headphones"
+      },
+      {
+        "id": "P09",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "coffee dripper"
+      },
+      {
+        "id": "P10",
+        "missed": [
+          "goal"
+        ],
+        "fallback": null,
+        "productQuery": "ceramic pour-over cone"
+      },
+      {
+        "id": "P11",
+        "missed": [
+          "goal"
+        ],
+        "fallback": null,
+        "productQuery": "headphones"
+      },
+      {
+        "id": "P12",
+        "missed": [],
+        "fallback": null,
+        "productQuery": null
+      },
+      {
+        "id": "P13",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "headphones"
+      },
+      {
+        "id": "P14",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "kettle set"
+      },
+      {
+        "id": "P15",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "headphones"
+      },
+      {
+        "id": "P16",
+        "missed": [
+          "reason"
+        ],
+        "fallback": null,
+        "productQuery": "headphones"
+      },
+      {
+        "id": "P17",
+        "missed": [],
+        "fallback": null,
+        "productQuery": null
+      },
+      {
+        "id": "P18",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "headphones"
+      },
+      {
+        "id": "P19",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "coffee set"
+      },
+      {
+        "id": "P20",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "headphones"
+      },
+      {
+        "id": "P21",
+        "missed": [
+          "goal"
+        ],
+        "fallback": null,
+        "productQuery": "noise cancelling headphones"
+      },
+      {
+        "id": "P22",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "pour-over set"
+      },
+      {
+        "id": "P23",
+        "missed": [
+          "reason"
+        ],
+        "fallback": null,
+        "productQuery": "headphones"
+      },
+      {
+        "id": "P24",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "headphones"
+      },
+      {
+        "id": "P25",
+        "missed": [],
+        "fallback": "model output did not match the expected shape",
+        "productQuery": null
+      },
+      {
+        "id": "P26",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "headset left speaker"
+      },
+      {
+        "id": "P27",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "headphones"
+      },
+      {
+        "id": "P28",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "pour-over set"
+      },
+      {
+        "id": "P29",
+        "missed": [],
+        "fallback": null,
+        "productQuery": null
+      },
+      {
+        "id": "P30",
+        "missed": [],
+        "fallback": null,
+        "productQuery": "headphones"
+      }
+    ]
+  }
+}
