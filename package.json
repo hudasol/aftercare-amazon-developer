@@ -24,6 +24,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "eval": "node --import tsx src/cli/run-evaluation.ts",
+    "eval:interpreters": "node --env-file-if-exists=.env --import tsx src/cli/run-interpreter-evaluation.ts",
     "mcp:smoke": "node --env-file-if-exists=.env --import tsx src/cli/mcp-smoke.ts",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm test"
   },

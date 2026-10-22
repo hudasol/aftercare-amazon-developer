@@ -7,3 +7,4 @@ playwright-report
 package-lock.json
 data/evaluation
 docs/EVALUATION_RESULTS.md
+docs/INTERPRETER_EVALUATION.md
