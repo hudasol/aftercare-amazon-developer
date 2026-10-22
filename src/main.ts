@@ -5,16 +5,19 @@
 import type { AddressInfo } from 'node:net';
 import { loadConfig } from './config.js';
 import { createContainer } from './container.js';
+import { interpreterFromConfig } from './infrastructure/interpreter/llm-interpreter.js';
 import { createHttpApp } from './interfaces/http/app.js';
 
 async function main(): Promise<void> {
   const config = loadConfig();
+  const interpreter = interpreterFromConfig(config);
   const container = createContainer({
     databasePath: config.DATABASE_PATH,
     demoCustomer: config.AFTERCARE_DEMO_CUSTOMER,
     caseDate: config.AFTERCARE_CASE_DATE,
     latencyMs: config.SANDBOX_LATENCY_MS,
     timeoutMs: config.SANDBOX_TIMEOUT_MS,
+    ...(interpreter ? { interpreter } : {}),
   });
   if (container.migrations.length > 0) {
     console.info(`Applied migrations: ${container.migrations.join(', ')}`);
@@ -35,6 +38,15 @@ async function main(): Promise<void> {
     console.info(`  Resolution Lab     ${base}/lab`);
     console.info(`  MCP endpoint       ${base}/mcp  (Streamable HTTP, protocol 2025-11-25)`);
     console.info(`  Database           ${config.DATABASE_PATH}`);
+    if (interpreter) {
+      console.info(
+        `  Interpreter        ${interpreter.id} (model ${config.AFTERCARE_LLM_MODEL}), falls back to rules@1`,
+      );
+    } else if (config.AFTERCARE_LLM_BASE_URL || config.AFTERCARE_LLM_MODEL) {
+      console.warn(
+        '  Model interpreter not used: set both AFTERCARE_LLM_BASE_URL and AFTERCARE_LLM_MODEL.',
+      );
+    }
     if (config.AFTERCARE_PUBLIC_DEMO && !config.AFTERCARE_ACCESS_TOKEN) {
       console.warn('  Public demo mode: /api and /mcp accept unauthenticated requests.');
     }

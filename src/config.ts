@@ -28,6 +28,16 @@ const ConfigSchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional(),
+  /**
+   * Optional language model interpreter (OpenAI compatible chat completions).
+   * Used only when both the base URL and the model are set; otherwise the rules
+   * interpreter runs alone.
+   */
+  AFTERCARE_LLM_BASE_URL: z.url().optional(),
+  AFTERCARE_LLM_MODEL: z.string().min(1).optional(),
+  /** Optional: a local server needs no key. Never logged. */
+  AFTERCARE_LLM_API_KEY: z.string().min(1).optional(),
+  AFTERCARE_LLM_TIMEOUT_MS: z.coerce.number().int().min(100).max(60_000).default(8000),
   SANDBOX_LATENCY_MS: z.coerce.number().int().min(0).max(10_000).default(250),
   SANDBOX_TIMEOUT_MS: z.coerce.number().int().min(0).max(30_000).default(1500),
   /** Serve the built web app from web/dist. */
