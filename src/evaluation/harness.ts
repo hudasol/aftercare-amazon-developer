@@ -1,6 +1,6 @@
 /**
- * Runs every scenario against AFTERCARE and the baseline, each in a fresh
- * database with a freshly seeded retailer sandbox, and scores both from the
+ * Runs every scenario against AFTERCARE and two baselines, each in a fresh
+ * database with a freshly seeded retailer sandbox, and scores them from the
  * retailer's own records plus the hand-written ground truth.
  */
 import { mkdtempSync, rmSync } from 'node:fs';
@@ -9,8 +9,13 @@ import { join } from 'node:path';
 import { createContainer, loadSeedDataset, type Container } from '../container.js';
 import { COMPILER_VERSION } from '../domain/assessment.js';
 import type { SandboxDataset } from '../infrastructure/retailer-sandbox/sandbox.js';
-import { runAftercare, runBaseline, type Run } from './agents.js';
+import { runAftercare, runBaseline, runCarefulBaseline, type Run } from './agents.js';
+import { EXTENDED_SCENARIOS } from './scenarios-extended.js';
 import { SCENARIOS, type Scenario } from './scenarios.js';
+
+/** The first 14 scenarios, followed by S15 onwards. */
+export const ALL_SCENARIOS: Scenario[] = [...SCENARIOS, ...EXTENDED_SCENARIOS];
+const ORIGINAL_IDS = new Set(SCENARIOS.map((s) => s.id));
 
 export const METRIC_DEFINITIONS = {
   outcomeCorrect:
@@ -48,6 +53,15 @@ export interface ScenarioResult {
   expected: Scenario['truth'];
   aftercare: AgentResult;
   baseline: AgentResult;
+  careful: AgentResult;
+}
+
+type Totals = { aftercare: Metrics; baseline: Metrics; careful: Metrics };
+
+export interface ScenarioSet {
+  label: string;
+  scenarioIds: string[];
+  totals: Totals;
 }
 
 export interface EvaluationResults {
@@ -55,13 +69,20 @@ export interface EvaluationResults {
   caseDate: string;
   scenarioCount: number;
   baselineDefinition: string;
+  carefulBaselineDefinition: string;
   metricDefinitions: typeof METRIC_DEFINITIONS;
-  totals: { aftercare: Metrics; baseline: Metrics };
+  /** Over every scenario. */
+  totals: Totals;
+  /** The original 14 and the scenarios added later, reported separately. */
+  sets: ScenarioSet[];
   scenarios: ScenarioResult[];
 }
 
 export const BASELINE_DEFINITION =
   'A deterministic tool-calling agent with the same retailer tools and the same language interpreter as AFTERCARE, but none of its controls: it takes the most recent matching order, applies the currently published policy version, assumes "defective" when no reason is given, treats agreement in conversation as approval, reports the return confirmed as soon as the submission call returns, and retries failures and timeouts with a new request (up to 3 attempts). It is a reference point, not a measurement of any particular LLM or product.';
+
+export const CAREFUL_BASELINE_DEFINITION =
+  'The first baseline with three fixes that need no case model: it selects the policy version by order date, reuses one idempotency key for every attempt, and reads the return back before reporting anything (confirmed only when the record says authorized, up to 5 reads). It still takes the most recent matching order, assumes "defective" when no reason is given, treats agreement in conversation as approval, keeps an approval when the terms change, and ignores carrier records.';
 
 function datasetFor(base: SandboxDataset, scenario: Scenario): SandboxDataset {
   return {
@@ -157,6 +178,7 @@ function score(scenario: Scenario, run: Run, container: Container): AgentResult 
 
 async function inFreshContainer<T>(
   dataset: SandboxDataset,
+  scenario: Scenario,
   fn: (c: Container) => Promise<T>,
 ): Promise<T> {
   const dir = mkdtempSync(join(tmpdir(), 'aftercare-eval-'));
@@ -165,6 +187,9 @@ async function inFreshContainer<T>(
     demoCustomer: 'cus_demo_maya',
     dataset,
   });
+  for (const outcome of scenario.lookupScript ?? []) {
+    container.sandbox.queueOutcome('lookup', outcome, null);
+  }
   try {
     return await fn(container);
   } finally {
@@ -185,16 +210,33 @@ const zero = (): Metrics => ({
   confirmedBeforeVerifying: 0,
 });
 
-export async function runEvaluation(scenarios: Scenario[] = SCENARIOS): Promise<EvaluationResults> {
+function sum(results: ScenarioResult[]): Totals {
+  const totals = { aftercare: zero(), baseline: zero(), careful: zero() };
+  for (const r of results) {
+    for (const key of Object.keys(totals.aftercare) as MetricName[]) {
+      totals.aftercare[key] += r.aftercare.metrics[key];
+      totals.baseline[key] += r.baseline.metrics[key];
+      totals.careful[key] += r.careful.metrics[key];
+    }
+  }
+  return totals;
+}
+
+export async function runEvaluation(
+  scenarios: Scenario[] = ALL_SCENARIOS,
+): Promise<EvaluationResults> {
   const base = loadSeedDataset();
   const results: ScenarioResult[] = [];
   for (const scenario of scenarios) {
     const dataset = datasetFor(base, scenario);
-    const aftercare = await inFreshContainer(dataset, async (c) =>
+    const aftercare = await inFreshContainer(dataset, scenario, async (c) =>
       score(scenario, await runAftercare(c, scenario), c),
     );
-    const baseline = await inFreshContainer(dataset, async (c) =>
+    const baseline = await inFreshContainer(dataset, scenario, async (c) =>
       score(scenario, await runBaseline(c, scenario, base.caseDate), c),
+    );
+    const careful = await inFreshContainer(dataset, scenario, async (c) =>
+      score(scenario, await runCarefulBaseline(c, scenario, base.caseDate), c),
     );
     results.push({
       id: scenario.id,
@@ -203,22 +245,24 @@ export async function runEvaluation(scenarios: Scenario[] = SCENARIOS): Promise<
       expected: scenario.truth,
       aftercare,
       baseline,
+      careful,
     });
   }
-  const totals = { aftercare: zero(), baseline: zero() };
-  for (const r of results) {
-    for (const key of Object.keys(totals.aftercare) as MetricName[]) {
-      totals.aftercare[key] += r.aftercare.metrics[key];
-      totals.baseline[key] += r.baseline.metrics[key];
-    }
-  }
+  const original = results.filter((r) => ORIGINAL_IDS.has(r.id));
+  const added = results.filter((r) => !ORIGINAL_IDS.has(r.id));
+  const sets: ScenarioSet[] = [
+    { label: 'Original scenarios', scenarioIds: original.map((r) => r.id), totals: sum(original) },
+    { label: 'Added scenarios', scenarioIds: added.map((r) => r.id), totals: sum(added) },
+  ].filter((set) => set.scenarioIds.length > 0);
   return {
     compilerVersion: COMPILER_VERSION,
     caseDate: base.caseDate,
     scenarioCount: results.length,
     baselineDefinition: BASELINE_DEFINITION,
+    carefulBaselineDefinition: CAREFUL_BASELINE_DEFINITION,
     metricDefinitions: METRIC_DEFINITIONS,
-    totals,
+    totals: sum(results),
+    sets,
     scenarios: results,
   };
 }
@@ -235,37 +279,51 @@ const LABELS: Record<MetricName, string> = {
   confirmedBeforeVerifying: 'Confirmed before verifying',
 };
 
+function totalsTable(totals: Totals, n: number): string[] {
+  return [
+    '| Metric | AFTERCARE | Baseline | Careful baseline |',
+    '| --- | ---: | ---: | ---: |',
+    ...(Object.keys(LABELS) as MetricName[]).map((k) => {
+      const suffix = k === 'outcomeCorrect' ? ` / ${n}` : '';
+      return `| ${LABELS[k]} | ${totals.aftercare[k]}${suffix} | ${totals.baseline[k]}${suffix} | ${totals.careful[k]}${suffix} |`;
+    }),
+  ];
+}
+
 export function renderMarkdown(results: EvaluationResults): string {
   const n = results.scenarioCount;
+  const problems = (r: AgentResult) =>
+    (Object.keys(LABELS) as MetricName[])
+      .filter((k) => k !== 'outcomeCorrect' && r.metrics[k] > 0)
+      .map((k) => LABELS[k].toLowerCase())
+      .join(', ') || 'none';
+  const mark = (r: AgentResult) => `${r.claim}${r.metrics.outcomeCorrect ? ' ✓' : ' ✗'}`;
   const lines = [
     '<!-- Generated by `npm run eval`. Do not edit by hand. -->',
     '# Evaluation results',
     '',
     `Scenarios: **${n}**. Case date: ${results.caseDate}. Compiler ${results.compilerVersion}.`,
     '',
-    '## Totals',
-    '',
-    '| Metric | AFTERCARE | Baseline |',
-    '| --- | ---: | ---: |',
-    ...(Object.keys(LABELS) as MetricName[]).map((k) => {
-      const suffix = k === 'outcomeCorrect' ? ` / ${n}` : '';
-      return `| ${LABELS[k]} | ${results.totals.aftercare[k]}${suffix} | ${results.totals.baseline[k]}${suffix} |`;
-    }),
-    '',
     'Each count is the number of scenarios where it happened, except duplicate attempts and extra returns, which count events.',
+    '',
+    ...results.sets.flatMap((set) => [
+      `## ${set.label} (${set.scenarioIds[0] ?? ''} to ${set.scenarioIds.at(-1) ?? ''})`,
+      '',
+      ...totalsTable(set.totals, set.scenarioIds.length),
+      '',
+    ]),
+    `## All ${n} scenarios`,
+    '',
+    ...totalsTable(results.totals, n),
     '',
     '## Per scenario',
     '',
-    '| ID | Scenario | Expected | AFTERCARE | Baseline | Baseline problems |',
-    '| --- | --- | --- | --- | --- | --- |',
-    ...results.scenarios.map((s) => {
-      const problems = (Object.keys(LABELS) as MetricName[])
-        .filter((k) => k !== 'outcomeCorrect' && s.baseline.metrics[k] > 0)
-        .map((k) => LABELS[k].toLowerCase())
-        .join(', ');
-      const mark = (r: AgentResult) => `${r.claim}${r.metrics.outcomeCorrect ? ' ✓' : ' ✗'}`;
-      return `| ${s.id} | ${s.title} | ${s.expected.outcome} | ${mark(s.aftercare)} | ${mark(s.baseline)} | ${problems || 'none'} |`;
-    }),
+    '| ID | Scenario | Expected | AFTERCARE | Baseline | Careful baseline | Baseline problems | Careful baseline problems |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- |',
+    ...results.scenarios.map(
+      (s) =>
+        `| ${s.id} | ${s.title} | ${s.expected.outcome} | ${mark(s.aftercare)} | ${mark(s.baseline)} | ${mark(s.careful)} | ${problems(s.baseline)} | ${problems(s.careful)} |`,
+    ),
     '',
     '## Metric definitions',
     '',
@@ -276,6 +334,10 @@ export function renderMarkdown(results: EvaluationResults): string {
     '## Baseline',
     '',
     results.baselineDefinition,
+    '',
+    '## Careful baseline',
+    '',
+    results.carefulBaselineDefinition,
     '',
   ];
   return lines.join('\n');

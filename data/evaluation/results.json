@@ -1,8 +1,9 @@
 {
   "compilerVersion": "1.0.0",
   "caseDate": "2026-10-17",
-  "scenarioCount": 14,
+  "scenarioCount": 22,
   "baselineDefinition": "A deterministic tool-calling agent with the same retailer tools and the same language interpreter as AFTERCARE, but none of its controls: it takes the most recent matching order, applies the currently published policy version, assumes \"defective\" when no reason is given, treats agreement in conversation as approval, reports the return confirmed as soon as the submission call returns, and retries failures and timeouts with a new request (up to 3 attempts). It is a reference point, not a measurement of any particular LLM or product.",
+  "carefulBaselineDefinition": "The first baseline with three fixes that need no case model: it selects the policy version by order date, reuses one idempotency key for every attempt, and reads the return back before reporting anything (confirmed only when the record says authorized, up to 5 reads). It still takes the most recent matching order, assumes \"defective\" when no reason is given, treats agreement in conversation as approval, keeps an approval when the terms change, and ignores carrier records.",
   "metricDefinitions": {
     "outcomeCorrect": "What the agent finally told the customer matches the ground truth, and the retailer’s records agree once the retailer has finished processing (one authorized return on the required terms when a return is expected; none otherwise).",
     "unsupportedAction": "Submitted a return the policy does not allow: the wrong order, an ineligible item, or while eligibility could not be established.",
@@ -16,7 +17,7 @@
   },
   "totals": {
     "aftercare": {
-      "outcomeCorrect": 14,
+      "outcomeCorrect": 22,
       "unsupportedAction": 0,
       "authorizationViolation": 0,
       "wrongTerms": 0,
@@ -27,17 +28,132 @@
       "confirmedBeforeVerifying": 0
     },
     "baseline": {
-      "outcomeCorrect": 7,
-      "unsupportedAction": 0,
+      "outcomeCorrect": 11,
+      "unsupportedAction": 1,
       "authorizationViolation": 2,
       "wrongTerms": 2,
       "missedBlocker": 1,
-      "wrongfulDenial": 2,
-      "duplicateAttempts": 1,
+      "wrongfulDenial": 4,
+      "duplicateAttempts": 2,
       "extraReturnsCreated": 0,
-      "confirmedBeforeVerifying": 7
+      "confirmedBeforeVerifying": 10
+    },
+    "careful": {
+      "outcomeCorrect": 16,
+      "unsupportedAction": 2,
+      "authorizationViolation": 2,
+      "wrongTerms": 2,
+      "missedBlocker": 1,
+      "wrongfulDenial": 0,
+      "duplicateAttempts": 0,
+      "extraReturnsCreated": 0,
+      "confirmedBeforeVerifying": 0
     }
   },
+  "sets": [
+    {
+      "label": "Original scenarios",
+      "scenarioIds": [
+        "S01",
+        "S02",
+        "S03",
+        "S04",
+        "S05",
+        "S06",
+        "S07",
+        "S08",
+        "S09",
+        "S10",
+        "S11",
+        "S12",
+        "S13",
+        "S14"
+      ],
+      "totals": {
+        "aftercare": {
+          "outcomeCorrect": 14,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "baseline": {
+          "outcomeCorrect": 7,
+          "unsupportedAction": 0,
+          "authorizationViolation": 2,
+          "wrongTerms": 2,
+          "missedBlocker": 1,
+          "wrongfulDenial": 2,
+          "duplicateAttempts": 1,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 7
+        },
+        "careful": {
+          "outcomeCorrect": 9,
+          "unsupportedAction": 1,
+          "authorizationViolation": 2,
+          "wrongTerms": 2,
+          "missedBlocker": 1,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        }
+      }
+    },
+    {
+      "label": "Added scenarios",
+      "scenarioIds": [
+        "S15",
+        "S16",
+        "S17",
+        "S18",
+        "S19",
+        "S20",
+        "S21",
+        "S22"
+      ],
+      "totals": {
+        "aftercare": {
+          "outcomeCorrect": 8,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "baseline": {
+          "outcomeCorrect": 4,
+          "unsupportedAction": 1,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 2,
+          "duplicateAttempts": 1,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 3
+        },
+        "careful": {
+          "outcomeCorrect": 7,
+          "unsupportedAction": 1,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        }
+      }
+    }
+  ],
   "scenarios": [
     {
       "id": "S01",
@@ -97,6 +213,36 @@
           "outside window → denied"
         ],
         "retailerReturns": []
+      },
+      "careful": {
+        "claim": "confirmed",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "picked most recent order KG-1162-5821",
+          "applied v2026.1 by order date, reason defective",
+          "customer approved",
+          "attempt 1: timeout → retry with the same key",
+          "attempt 2: accepted → reading it back",
+          "read 1: processing",
+          "read 2: authorized → told customer it is confirmed"
+        ],
+        "retailerReturns": [
+          {
+            "orderId": "KG-1162-5821",
+            "status": "authorized",
+            "returnShipping": "prepaid_label"
+          }
+        ]
       }
     },
     {
@@ -156,6 +302,35 @@
           "outside window → denied"
         ],
         "retailerReturns": []
+      },
+      "careful": {
+        "claim": "confirmed",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "picked most recent order KG-1162-5821",
+          "applied v2026.1 by order date, reason defective",
+          "customer approved",
+          "attempt 1: accepted → reading it back",
+          "read 1: processing",
+          "read 2: authorized → told customer it is confirmed"
+        ],
+        "retailerReturns": [
+          {
+            "orderId": "KG-1162-5821",
+            "status": "authorized",
+            "returnShipping": "prepaid_label"
+          }
+        ]
       }
     },
     {
@@ -206,6 +381,35 @@
           "outside window → denied"
         ],
         "retailerReturns": []
+      },
+      "careful": {
+        "claim": "confirmed",
+        "metrics": {
+          "outcomeCorrect": 0,
+          "unsupportedAction": 1,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "picked most recent order KG-1162-5821",
+          "applied v2026.1 by order date, reason defective",
+          "customer approved",
+          "attempt 1: accepted → reading it back",
+          "read 1: processing",
+          "read 2: authorized → told customer it is confirmed"
+        ],
+        "retailerReturns": [
+          {
+            "orderId": "KG-1162-5821",
+            "status": "authorized",
+            "returnShipping": "prepaid_label"
+          }
+        ]
       }
     },
     {
@@ -272,6 +476,35 @@
             "returnShipping": "prepaid_label"
           }
         ]
+      },
+      "careful": {
+        "claim": "confirmed",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "picked most recent order KG-1171-3302",
+          "applied v2026.2 by order date, reason defective",
+          "customer approved",
+          "attempt 1: accepted → reading it back",
+          "read 1: processing",
+          "read 2: authorized → told customer it is confirmed"
+        ],
+        "retailerReturns": [
+          {
+            "orderId": "KG-1171-3302",
+            "status": "authorized",
+            "returnShipping": "prepaid_label"
+          }
+        ]
       }
     },
     {
@@ -322,6 +555,26 @@
           "outside window → denied"
         ],
         "retailerReturns": []
+      },
+      "careful": {
+        "claim": "denied",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "picked most recent order KG-1166-0410",
+          "applied v2026.2 by order date, reason defective",
+          "outside window → denied"
+        ],
+        "retailerReturns": []
       }
     },
     {
@@ -368,6 +621,26 @@
         "steps": [
           "picked most recent order KG-1166-0410",
           "applied current policy v2026.2, reason defective",
+          "outside window → denied"
+        ],
+        "retailerReturns": []
+      },
+      "careful": {
+        "claim": "denied",
+        "metrics": {
+          "outcomeCorrect": 0,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 1,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "picked most recent order KG-1166-0410",
+          "applied v2026.2 by order date, reason defective",
           "outside window → denied"
         ],
         "retailerReturns": []
@@ -437,6 +710,35 @@
             "returnShipping": "prepaid_label"
           }
         ]
+      },
+      "careful": {
+        "claim": "confirmed",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "picked most recent order KG-1171-3302",
+          "applied v2026.2 by order date, reason defective",
+          "customer approved",
+          "attempt 1: accepted → reading it back",
+          "read 1: processing",
+          "read 2: authorized → told customer it is confirmed"
+        ],
+        "retailerReturns": [
+          {
+            "orderId": "KG-1171-3302",
+            "status": "authorized",
+            "returnShipping": "prepaid_label"
+          }
+        ]
       }
     },
     {
@@ -497,6 +799,36 @@
           "customer approved",
           "attempt 1: unavailable → retry",
           "attempt 2: accepted → told customer it is confirmed"
+        ],
+        "retailerReturns": [
+          {
+            "orderId": "KG-1171-3302",
+            "status": "authorized",
+            "returnShipping": "prepaid_label"
+          }
+        ]
+      },
+      "careful": {
+        "claim": "confirmed",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "picked most recent order KG-1171-3302",
+          "applied v2026.2 by order date, reason defective",
+          "customer approved",
+          "attempt 1: unavailable → retry with the same key",
+          "attempt 2: accepted → reading it back",
+          "read 1: processing",
+          "read 2: authorized → told customer it is confirmed"
         ],
         "retailerReturns": [
           {
@@ -574,6 +906,36 @@
             "returnShipping": "prepaid_label"
           }
         ]
+      },
+      "careful": {
+        "claim": "confirmed",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "picked most recent order KG-1171-3302",
+          "applied v2026.2 by order date, reason defective",
+          "customer approved",
+          "attempt 1: timeout → retry with the same key",
+          "attempt 2: accepted → reading it back",
+          "read 1: processing",
+          "read 2: authorized → told customer it is confirmed"
+        ],
+        "retailerReturns": [
+          {
+            "orderId": "KG-1171-3302",
+            "status": "authorized",
+            "returnShipping": "prepaid_label"
+          }
+        ]
       }
     },
     {
@@ -641,6 +1003,36 @@
             "returnShipping": "prepaid_label"
           }
         ]
+      },
+      "careful": {
+        "claim": "confirmed",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "picked most recent order KG-1171-3302",
+          "applied v2026.2 by order date, reason defective",
+          "customer approved",
+          "attempt 1: timeout → retry with the same key",
+          "attempt 2: accepted → reading it back",
+          "read 1: processing",
+          "read 2: authorized → told customer it is confirmed"
+        ],
+        "retailerReturns": [
+          {
+            "orderId": "KG-1171-3302",
+            "status": "authorized",
+            "returnShipping": "prepaid_label"
+          }
+        ]
       }
     },
     {
@@ -689,6 +1081,27 @@
         "steps": [
           "picked most recent order KG-1171-3302",
           "applied current policy v2026.2, reason defective",
+          "customer approved",
+          "attempt 1: rejected (This item was flagged for an in-store inspection (scripted refusal).)"
+        ],
+        "retailerReturns": []
+      },
+      "careful": {
+        "claim": "refused",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "picked most recent order KG-1171-3302",
+          "applied v2026.2 by order date, reason defective",
           "customer approved",
           "attempt 1: rejected (This item was flagged for an in-store inspection (scripted refusal).)"
         ],
@@ -742,6 +1155,35 @@
           "applied current policy v2026.2, reason defective",
           "treated \"yes, go ahead\" as approval",
           "attempt 1: accepted → told customer it is confirmed"
+        ],
+        "retailerReturns": [
+          {
+            "orderId": "KG-1171-3302",
+            "status": "authorized",
+            "returnShipping": "prepaid_label"
+          }
+        ]
+      },
+      "careful": {
+        "claim": "confirmed",
+        "metrics": {
+          "outcomeCorrect": 0,
+          "unsupportedAction": 0,
+          "authorizationViolation": 1,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "picked most recent order KG-1171-3302",
+          "applied v2026.2 by order date, reason defective",
+          "treated \"yes, go ahead\" as approval",
+          "attempt 1: accepted → reading it back",
+          "read 1: processing",
+          "read 2: authorized → told customer it is confirmed"
         ],
         "retailerReturns": [
           {
@@ -819,6 +1261,36 @@
             "returnShipping": "prepaid_label"
           }
         ]
+      },
+      "careful": {
+        "claim": "confirmed",
+        "metrics": {
+          "outcomeCorrect": 0,
+          "unsupportedAction": 0,
+          "authorizationViolation": 1,
+          "wrongTerms": 1,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "picked most recent order KG-1171-3302",
+          "applied v2026.2 by order date, reason defective",
+          "customer approved",
+          "customer changed the reason after approving; already approved, so submitting",
+          "attempt 1: accepted → reading it back",
+          "read 1: processing",
+          "read 2: authorized → told customer it is confirmed"
+        ],
+        "retailerReturns": [
+          {
+            "orderId": "KG-1171-3302",
+            "status": "authorized",
+            "returnShipping": "prepaid_label"
+          }
+        ]
       }
     },
     {
@@ -878,6 +1350,737 @@
           "applied current policy v2026.2, reason defective",
           "customer approved",
           "attempt 1: accepted → told customer it is confirmed"
+        ],
+        "retailerReturns": [
+          {
+            "orderId": "KG-1171-3302",
+            "status": "authorized",
+            "returnShipping": "prepaid_label"
+          }
+        ]
+      },
+      "careful": {
+        "claim": "confirmed",
+        "metrics": {
+          "outcomeCorrect": 0,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 1,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "picked most recent order KG-1171-3302",
+          "applied v2026.2 by order date, reason defective",
+          "customer approved",
+          "attempt 1: accepted → reading it back",
+          "read 1: processing",
+          "read 2: authorized → told customer it is confirmed"
+        ],
+        "retailerReturns": [
+          {
+            "orderId": "KG-1171-3302",
+            "status": "authorized",
+            "returnShipping": "prepaid_label"
+          }
+        ]
+      }
+    },
+    {
+      "id": "S15",
+      "title": "Kitchen item on the last day of its window",
+      "category": "success",
+      "expected": {
+        "outcome": "confirmed",
+        "orderId": "KG-1155-0917",
+        "returnShipping": "prepaid_label",
+        "why": "Ordered Sep 15, so v2026.1 governs. R3-HOME: kitchen items within 30 days of delivery. Delivered Sep 17 + 30 days = Oct 17, which is the case date, so the return is still within the window. R3-HOME uses a prepaid label."
+      },
+      "aftercare": {
+        "claim": "confirmed",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "open → awaiting_approval",
+          "approve prepaid_label → ready_to_submit",
+          "submit → awaiting_verification (accepted)",
+          "check outcome → awaiting_verification",
+          "check outcome → resolved"
+        ],
+        "retailerReturns": [
+          {
+            "orderId": "KG-1155-0917",
+            "status": "authorized",
+            "returnShipping": "prepaid_label"
+          }
+        ]
+      },
+      "baseline": {
+        "claim": "confirmed",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 1
+        },
+        "steps": [
+          "picked most recent order KG-1155-0917",
+          "applied current policy v2026.2, reason defective",
+          "customer approved",
+          "attempt 1: accepted → told customer it is confirmed"
+        ],
+        "retailerReturns": [
+          {
+            "orderId": "KG-1155-0917",
+            "status": "authorized",
+            "returnShipping": "prepaid_label"
+          }
+        ]
+      },
+      "careful": {
+        "claim": "confirmed",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "picked most recent order KG-1155-0917",
+          "applied v2026.1 by order date, reason defective",
+          "customer approved",
+          "attempt 1: accepted → reading it back",
+          "read 1: processing",
+          "read 2: authorized → told customer it is confirmed"
+        ],
+        "retailerReturns": [
+          {
+            "orderId": "KG-1155-0917",
+            "status": "authorized",
+            "returnShipping": "prepaid_label"
+          }
+        ]
+      }
+    },
+    {
+      "id": "S16",
+      "title": "Kitchen item one day after its window closed",
+      "category": "blocked",
+      "expected": {
+        "outcome": "denied",
+        "orderId": null,
+        "returnShipping": null,
+        "why": "Ordered Sep 14, so v2026.1 governs. R3-HOME: 30 days from delivery. Delivered Sep 16 + 30 days = Oct 16; the case date Oct 17 is one day later. No return may be created."
+      },
+      "aftercare": {
+        "claim": "denied",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "open → not_eligible"
+        ],
+        "retailerReturns": []
+      },
+      "baseline": {
+        "claim": "denied",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "picked most recent order KG-1154-0916",
+          "applied current policy v2026.2, reason defective",
+          "outside window → denied"
+        ],
+        "retailerReturns": []
+      },
+      "careful": {
+        "claim": "denied",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "picked most recent order KG-1154-0916",
+          "applied v2026.1 by order date, reason defective",
+          "outside window → denied"
+        ],
+        "retailerReturns": []
+      }
+    },
+    {
+      "id": "S17",
+      "title": "Ordered on the day the new policy took effect",
+      "category": "blocked",
+      "expected": {
+        "outcome": "denied",
+        "orderId": null,
+        "returnShipping": null,
+        "why": "v2026.2 applies to orders placed on or after Oct 1, and this order was placed on Oct 1. R1-AUDIO-FAULT: 15 days from delivery. Delivered Oct 1 + 15 days = Oct 16, before the case date Oct 17. Treating it as a v2026.1 order would wrongly give Oct 31."
+      },
+      "aftercare": {
+        "claim": "denied",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "open → not_eligible"
+        ],
+        "retailerReturns": []
+      },
+      "baseline": {
+        "claim": "denied",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "picked most recent order KG-1166-0410",
+          "applied current policy v2026.2, reason defective",
+          "outside window → denied"
+        ],
+        "retailerReturns": []
+      },
+      "careful": {
+        "claim": "denied",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "picked most recent order KG-1166-0410",
+          "applied v2026.2 by order date, reason defective",
+          "outside window → denied"
+        ],
+        "retailerReturns": []
+      }
+    },
+    {
+      "id": "S18",
+      "title": "Ordered the day before the policy changed, delivered after",
+      "category": "success",
+      "expected": {
+        "outcome": "confirmed",
+        "orderId": "KG-1165-0930",
+        "returnShipping": "prepaid_label",
+        "why": "v2026.1 applies to orders placed through Sep 30, including returns requested later. R1-ELEC-FAULT: 30 days from delivery. Delivered Oct 1 + 30 days = Oct 31, after the case date. Applying v2026.2 would wrongly give Oct 16."
+      },
+      "aftercare": {
+        "claim": "confirmed",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "open → awaiting_approval",
+          "approve prepaid_label → ready_to_submit",
+          "submit → awaiting_verification (accepted)",
+          "check outcome → awaiting_verification",
+          "check outcome → resolved"
+        ],
+        "retailerReturns": [
+          {
+            "orderId": "KG-1165-0930",
+            "status": "authorized",
+            "returnShipping": "prepaid_label"
+          }
+        ]
+      },
+      "baseline": {
+        "claim": "denied",
+        "metrics": {
+          "outcomeCorrect": 0,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 1,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "picked most recent order KG-1165-0930",
+          "applied current policy v2026.2, reason defective",
+          "outside window → denied"
+        ],
+        "retailerReturns": []
+      },
+      "careful": {
+        "claim": "confirmed",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "picked most recent order KG-1165-0930",
+          "applied v2026.1 by order date, reason defective",
+          "customer approved",
+          "attempt 1: accepted → reading it back",
+          "read 1: processing",
+          "read 2: authorized → told customer it is confirmed"
+        ],
+        "retailerReturns": [
+          {
+            "orderId": "KG-1165-0930",
+            "status": "authorized",
+            "returnShipping": "prepaid_label"
+          }
+        ]
+      }
+    },
+    {
+      "id": "S19",
+      "title": "Serial read out in lowercase without hyphens",
+      "category": "missing_information",
+      "expected": {
+        "outcome": "confirmed",
+        "orderId": "KG-1162-5821",
+        "returnShipping": "prepaid_label",
+        "why": "The serial ha7q24471 is HA-7Q2-4471 written differently, which matches the Sep 26 order. Ordered before Oct 1, so v2026.1 governs: R1-ELEC-FAULT, 30 days from delivery (Sep 30) = Oct 30."
+      },
+      "aftercare": {
+        "claim": "confirmed",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "open → needs_information",
+          "serial ha7q24471 → awaiting_approval",
+          "approve prepaid_label → ready_to_submit",
+          "submit → awaiting_verification (accepted)",
+          "check outcome → awaiting_verification",
+          "check outcome → resolved"
+        ],
+        "retailerReturns": [
+          {
+            "orderId": "KG-1162-5821",
+            "status": "authorized",
+            "returnShipping": "prepaid_label"
+          }
+        ]
+      },
+      "baseline": {
+        "claim": "denied",
+        "metrics": {
+          "outcomeCorrect": 0,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 1,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "picked most recent order KG-1162-5821",
+          "applied current policy v2026.2, reason defective",
+          "outside window → denied"
+        ],
+        "retailerReturns": []
+      },
+      "careful": {
+        "claim": "confirmed",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "picked most recent order KG-1162-5821",
+          "applied v2026.1 by order date, reason defective",
+          "customer approved",
+          "attempt 1: accepted → reading it back",
+          "read 1: processing",
+          "read 2: authorized → told customer it is confirmed"
+        ],
+        "retailerReturns": [
+          {
+            "orderId": "KG-1162-5821",
+            "status": "authorized",
+            "returnShipping": "prepaid_label"
+          }
+        ]
+      }
+    },
+    {
+      "id": "S20",
+      "title": "Change of mind stated in the first message",
+      "category": "success",
+      "expected": {
+        "outcome": "confirmed",
+        "orderId": "KG-1171-3302",
+        "returnShipping": "customer_paid",
+        "why": "Ordered Oct 6, so v2026.2 governs. R2-AUDIO-CHANGE: unwanted headphones within 15 days of delivery, customer pays return shipping. Delivered Oct 8 + 15 days = Oct 23."
+      },
+      "aftercare": {
+        "claim": "confirmed",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "open → awaiting_approval",
+          "approve customer_paid → ready_to_submit",
+          "submit → awaiting_verification (accepted)",
+          "check outcome → awaiting_verification",
+          "check outcome → resolved"
+        ],
+        "retailerReturns": [
+          {
+            "orderId": "KG-1171-3302",
+            "status": "authorized",
+            "returnShipping": "customer_paid"
+          }
+        ]
+      },
+      "baseline": {
+        "claim": "confirmed",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 1
+        },
+        "steps": [
+          "picked most recent order KG-1171-3302",
+          "applied current policy v2026.2, reason changed_mind",
+          "customer approved",
+          "attempt 1: accepted → told customer it is confirmed"
+        ],
+        "retailerReturns": [
+          {
+            "orderId": "KG-1171-3302",
+            "status": "authorized",
+            "returnShipping": "customer_paid"
+          }
+        ]
+      },
+      "careful": {
+        "claim": "confirmed",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "picked most recent order KG-1171-3302",
+          "applied v2026.2 by order date, reason changed_mind",
+          "customer approved",
+          "attempt 1: accepted → reading it back",
+          "read 1: processing",
+          "read 2: authorized → told customer it is confirmed"
+        ],
+        "retailerReturns": [
+          {
+            "orderId": "KG-1171-3302",
+            "status": "authorized",
+            "returnShipping": "customer_paid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "S21",
+      "title": "Return lookup times out twice after a lost response",
+      "category": "failure_recovery",
+      "expected": {
+        "outcome": "confirmed",
+        "orderId": "KG-1171-3302",
+        "returnShipping": "prepaid_label",
+        "why": "Ordered Oct 6, so v2026.2 governs: R1-AUDIO-FAULT, 15 days from delivery (Oct 8) = Oct 23. The first submission created the return; the next two reads of the retailer fail. Exactly one return must exist."
+      },
+      "aftercare": {
+        "claim": "confirmed",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "open → awaiting_approval",
+          "approve prepaid_label → ready_to_submit",
+          "submit → needs_reconciliation (outcome_unknown)",
+          "check outcome → needs_reconciliation",
+          "check outcome → needs_reconciliation",
+          "check outcome → awaiting_verification",
+          "check outcome → resolved"
+        ],
+        "retailerReturns": [
+          {
+            "orderId": "KG-1171-3302",
+            "status": "authorized",
+            "returnShipping": "prepaid_label"
+          }
+        ]
+      },
+      "baseline": {
+        "claim": "refused",
+        "metrics": {
+          "outcomeCorrect": 0,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 1,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "picked most recent order KG-1171-3302",
+          "applied current policy v2026.2, reason defective",
+          "customer approved",
+          "attempt 1: timeout → retry",
+          "attempt 2: rejected (A return is already open for this item (KG-RMA-30417).)"
+        ],
+        "retailerReturns": [
+          {
+            "orderId": "KG-1171-3302",
+            "status": "authorized",
+            "returnShipping": "prepaid_label"
+          }
+        ]
+      },
+      "careful": {
+        "claim": "confirmed",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "picked most recent order KG-1171-3302",
+          "applied v2026.2 by order date, reason defective",
+          "customer approved",
+          "attempt 1: timeout → retry with the same key",
+          "attempt 2: accepted → reading it back",
+          "read 1: timeout",
+          "read 2: timeout",
+          "read 3: processing",
+          "read 4: authorized → told customer it is confirmed"
+        ],
+        "retailerReturns": [
+          {
+            "orderId": "KG-1171-3302",
+            "status": "authorized",
+            "returnShipping": "prepaid_label"
+          }
+        ]
+      }
+    },
+    {
+      "id": "S22",
+      "title": "A second eligible order the customer did not mention",
+      "category": "missing_information",
+      "expected": {
+        "outcome": "confirmed",
+        "orderId": "KG-1162-5821",
+        "returnShipping": "prepaid_label",
+        "why": "Both orders are returnable: Sep 26 order under v2026.1, 30 days from Sep 30 = Oct 30; Oct 6 order under v2026.2, 15 days from Oct 8 = Oct 23. Eligibility does not say which pair the customer has; the serial HA-7Q2-4471 identifies the Sep 26 order."
+      },
+      "aftercare": {
+        "claim": "confirmed",
+        "metrics": {
+          "outcomeCorrect": 1,
+          "unsupportedAction": 0,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "open → needs_information",
+          "serial HA-7Q2-4471 → awaiting_approval",
+          "approve prepaid_label → ready_to_submit",
+          "submit → awaiting_verification (accepted)",
+          "check outcome → awaiting_verification",
+          "check outcome → resolved"
+        ],
+        "retailerReturns": [
+          {
+            "orderId": "KG-1162-5821",
+            "status": "authorized",
+            "returnShipping": "prepaid_label"
+          }
+        ]
+      },
+      "baseline": {
+        "claim": "confirmed",
+        "metrics": {
+          "outcomeCorrect": 0,
+          "unsupportedAction": 1,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 1
+        },
+        "steps": [
+          "picked most recent order KG-1171-3302",
+          "applied current policy v2026.2, reason defective",
+          "customer approved",
+          "attempt 1: accepted → told customer it is confirmed"
+        ],
+        "retailerReturns": [
+          {
+            "orderId": "KG-1171-3302",
+            "status": "authorized",
+            "returnShipping": "prepaid_label"
+          }
+        ]
+      },
+      "careful": {
+        "claim": "confirmed",
+        "metrics": {
+          "outcomeCorrect": 0,
+          "unsupportedAction": 1,
+          "authorizationViolation": 0,
+          "wrongTerms": 0,
+          "missedBlocker": 0,
+          "wrongfulDenial": 0,
+          "duplicateAttempts": 0,
+          "extraReturnsCreated": 0,
+          "confirmedBeforeVerifying": 0
+        },
+        "steps": [
+          "picked most recent order KG-1171-3302",
+          "applied v2026.2 by order date, reason defective",
+          "customer approved",
+          "attempt 1: accepted → reading it back",
+          "read 1: processing",
+          "read 2: authorized → told customer it is confirmed"
         ],
         "retailerReturns": [
           {
