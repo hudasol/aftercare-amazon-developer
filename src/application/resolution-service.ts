@@ -145,28 +145,33 @@ export class ResolutionService {
     return { id: this.deps.ids('ev'), caseId, observedAt: this.now() };
   }
 
-  private async interpret(
-    caseId: string | null,
-    utterance: string,
-  ): Promise<Interpretation & { interpreter: string }> {
+  private async interpret(utterance: string): Promise<{
+    interpretation: Interpretation & { interpreter: string };
+    fallback: { summary: string; error: string } | null;
+  }> {
     try {
       const result = await this.deps.interpreter.interpret(utterance);
-      return { ...result, interpreter: this.deps.interpreter.id };
+      return {
+        interpretation: { ...result, interpreter: this.deps.interpreter.id },
+        fallback: null,
+      };
     } catch (error) {
       const result = await this.deps.fallbackInterpreter.interpret(utterance);
-      if (caseId) {
-        this.event(
-          caseId,
-          'interpreter.fallback',
-          'aftercare',
-          `${this.deps.interpreter.id} failed; used ${this.deps.fallbackInterpreter.id}.`,
-          {
-            error: error instanceof Error ? error.message : String(error),
-          },
-        );
-      }
-      return { ...result, interpreter: this.deps.fallbackInterpreter.id };
+      return {
+        interpretation: { ...result, interpreter: this.deps.fallbackInterpreter.id },
+        fallback: {
+          summary: `${this.deps.interpreter.id} failed; used ${this.deps.fallbackInterpreter.id}.`,
+          error: error instanceof Error ? error.message : String(error),
+        },
+      };
     }
+  }
+
+  private recordFallback(caseId: string, fallback: { summary: string; error: string } | null) {
+    if (!fallback) return;
+    this.event(caseId, 'interpreter.fallback', 'aftercare', fallback.summary, {
+      error: fallback.error,
+    });
   }
 
   private say(caseId: string, text: string, assessmentId: string | null): void {
@@ -373,7 +378,7 @@ export class ResolutionService {
 
   async openCase(input: Actor & { utterance: string }): Promise<CaseView> {
     const utterance = requireText(input.utterance, 'utterance');
-    const interpretation = await this.interpret(null, utterance);
+    const { interpretation, fallback } = await this.interpret(utterance);
     const at = this.now();
     const product = interpretation.productQuery;
     const record: CaseRecord = {
@@ -401,6 +406,7 @@ export class ResolutionService {
           caseDate: record.asOf,
         },
       );
+      this.recordFallback(record.id, fallback);
       this.recordCustomerMessage(record.id, utterance, interpretation, input.channel);
     });
     await this.withLock(record.id, () => this.advance(record.id));
@@ -450,7 +456,8 @@ export class ResolutionService {
     const utterance = requireText(input.utterance, 'utterance');
     return this.withLock(input.caseId, async () => {
       const record = this.loadOwned(input.caseId, input.customerRef);
-      const interpretation = await this.interpret(record.id, utterance);
+      const { interpretation, fallback } = await this.interpret(utterance);
+      this.recordFallback(record.id, fallback);
       this.repo.transaction(() =>
         this.recordCustomerMessage(record.id, utterance, interpretation, input.channel),
       );

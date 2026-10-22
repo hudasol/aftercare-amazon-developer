@@ -415,3 +415,30 @@ describe('declining and cancelling', () => {
     expect(closed.case.state).toBe('closed');
   });
 });
+
+describe('interpreter fallback', () => {
+  it('records why the primary interpreter failed, on the opening message and later ones', async () => {
+    app.close();
+    app = createContainer({
+      databasePath: dbPath,
+      demoCustomer: CUSTOMER,
+      interpreter: {
+        id: 'broken@1',
+        interpret: () => Promise.reject(new Error('unavailable')),
+      },
+    });
+    const opened = await app.service.openCase({ ...ctx, utterance: FLAGSHIP });
+    expect(opened.case.state).toBe('needs_information');
+    const fallbacks = () =>
+      app.service
+        .getCase(opened.case.id, CUSTOMER)
+        .events.filter((e) => e.type === 'interpreter.fallback');
+    expect(fallbacks()).toHaveLength(1);
+    expect(fallbacks()[0]).toMatchObject({
+      summary: 'broken@1 failed; used rules@1.',
+      data: { error: 'unavailable' },
+    });
+    await app.service.sendMessage({ ...ctx, caseId: opened.case.id, utterance: 'HA-7Q2-4471' });
+    expect(fallbacks()).toHaveLength(2);
+  });
+});
