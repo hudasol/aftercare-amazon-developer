@@ -108,19 +108,22 @@ Each returns typed `structuredContent` with a short `speech` line for voice and 
 
 ## Measured results
 
-14 hand-labelled synthetic scenarios, each run against AFTERCARE and against a simpler agent with the same tools but none of the controls. Scores come from the simulated retailer's own records, judged after it has finished processing.
+22 hand-labelled synthetic scenarios, each run against AFTERCARE and two simpler agents with the same tools. The baseline has none of the controls. The careful baseline selects the policy version by order date, reuses one request key across retries and reads the return back before confirming, but has no approval digest, no rule for conflicting evidence and no case state machine. Scores come from the simulated retailer's own records, judged after it has finished processing.
 
-|                               |   AFTERCARE | Baseline |
-| ----------------------------- | ----------: | -------: |
-| Correct outcome               | **14 / 14** |   7 / 14 |
-| Wrongful denials              |           0 |        2 |
-| Missed blockers               |           0 |        1 |
-| Authorization violations      |           0 |        2 |
-| Wrong terms submitted         |           0 |        2 |
-| Duplicate submission attempts |           0 |        1 |
-| Confirmed before verifying    |           0 |        7 |
+|                               |   AFTERCARE | Baseline | Careful baseline |
+| ----------------------------- | ----------: | -------: | ---------------: |
+| Correct outcome, S01 to S14   | **14 / 14** |   7 / 14 |           9 / 14 |
+| Correct outcome, S15 to S22   |   **8 / 8** |    4 / 8 |            7 / 8 |
+| Correct outcome, all 22       | **22 / 22** |  11 / 22 |          16 / 22 |
+| Wrongful denials              |           0 |        4 |                0 |
+| Missed blockers               |           0 |        1 |                1 |
+| Authorization violations      |           0 |        2 |                2 |
+| Wrong terms submitted         |           0 |        2 |                2 |
+| Unsupported actions           |           0 |        1 |                2 |
+| Duplicate submission attempts |           0 |        2 |                0 |
+| Confirmed before verifying    |           0 |       10 |                0 |
 
-These are behaviour tests on a small synthetic set, not statistical estimates. The baseline is a reference point, not a measurement of any particular LLM. "Confirmed before verifying" counts claims made before checking; in this sandbox those returns were later authorized. Definitions, per-scenario results and limitations are in [docs/EVALUATION.md](docs/EVALUATION.md).
+S01 to S14 are the original set; their results for AFTERCARE and the baseline are unchanged. S15 to S22 were added later, with labels committed before any run. These are behaviour tests on a small synthetic set written by the same team, not statistical estimates. The baselines are reference points, not measurements of any particular LLM. "Confirmed before verifying" counts claims made before checking; in this sandbox those returns were later authorized. Definitions, per-scenario results and limitations are in [docs/EVALUATION.md](docs/EVALUATION.md).
 
 ## Tests
 
