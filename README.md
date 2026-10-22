@@ -69,7 +69,13 @@ No token or account is needed. Every record is fictional, and the Lab's reset bu
 npm run mcp:smoke -- https://aftercare-mxfm.onrender.com/mcp
 ```
 
-It runs on Render's free plan (Virginia) and redeploys from `main` automatically. **After 15 minutes without traffic the service sleeps, and the next request takes about a minute.** There is no persistent disk, so cases reset whenever it sleeps or redeploys. See [Known limitations](docs/KNOWN_LIMITATIONS.md).
+It runs on Render's free plan (Virginia). **After 15 minutes without traffic the service sleeps, and the next request takes about a minute.** There is no persistent disk, so cases reset whenever it sleeps or redeploys. See [Known limitations](docs/KNOWN_LIMITATIONS.md).
+
+**Cold starts.** If the server went to sleep while the page was open, the web app shows "Waking the demo, this can take about a minute" and retries on its own for up to about 90 seconds, instead of showing an error. It retries only reads and a harmless health check; a tool call is never sent twice. An MCP client calling `/mcp` directly may time out on its first call after a sleep; calling again once the server answers works.
+
+**Keeping it warm during judging.** A free external uptime monitor that requests `https://aftercare-mxfm.onrender.com/api/health` every 10 minutes keeps the free instance from sleeping. It is set up by hand, outside this repository; the repository contains no code that pings itself.
+
+**Rate limit.** `/mcp` and `/api` accept up to 600 requests per client address per minute (`AFTERCARE_RATE_LIMIT_PER_MINUTE`, 0 turns it off) and answer 429 with a short message above that, so one script cannot take the shared demo down. The limit is kept in memory.
 
 ### Running your own
 
