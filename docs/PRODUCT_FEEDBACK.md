@@ -38,4 +38,3 @@ The rules require feedback on every tool, API or SDK used. This draft records wh
 
 - **Node.js 24 (`node:sqlite`)**: a built-in synchronous SQLite with no native build step; it made transactions and migrations simple on Windows.
 - **Vite + React 19, Playwright (+ axe-core)**: the end-to-end tests include a real server restart and automated accessibility checks.
-- **Claude Code** was used to build the project.
