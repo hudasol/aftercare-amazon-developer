@@ -41,3 +41,47 @@ The rules require feedback on every tool, API or SDK used. This draft records wh
 
 - **Node.js 24 (`node:sqlite`)**: a built-in synchronous SQLite with no native build step; it made transactions and migrations simple on Windows.
 - **Vite + React 19, Playwright (+ axe-core)**: the end-to-end tests include a real server restart and automated accessibility checks.
+
+## Onboarding experience: zero to hello world
+
+**First working call.** The first working round trip in this project is `npm run mcp:smoke`. It uses the official SDK client to send `initialize` (protocol 2025-11-25 is negotiated), `tools/list` (10 tools are listed) and one `tools/call` (`start_return_case`, which opens a case and asks for the item's serial number). The script was added on 2026-10-18, the first day of the repository.
+
+**From a clean checkout (measured 2026-10-23).** Windows 11, Node.js v24.15.0, npm 11.12.1, a new empty directory, no `.env` file and no `AFTERCARE_` variables, commit 4c75719:
+
+| Step                                 | Command                                                               | Wall time |
+| ------------------------------------ | --------------------------------------------------------------------- | --------: |
+| Clone                                | `git clone https://github.com/hudasol/aftercare-amazon-developer.git` |     7.1 s |
+| Install                              | `npm ci`                                                              |    29.7 s |
+| Build the web app                    | `npm run build`                                                       |     5.0 s |
+| Start until `/api/health` answers    | `PORT=8811 npm start`                                                 |     4.7 s |
+| initialize, tools/list, tools/call   | `npm run mcp:smoke -- http://127.0.0.1:8811/mcp`                      |     4.5 s |
+| Total, clone to a passing smoke test |                                                                       |    51.0 s |
+
+This measures how quickly someone can reach a working call with this repository. It does not measure how long the first working call took while the project was being built.
+
+TO CONFIRM BY AUTHOR: Before this repository existed, how long did it take you to get a first MCP tools/call working with the SDK, and what, if anything, was confusing on the way?
+
+**What was clear.**
+
+- MCP TypeScript SDK: `registerTool` with zod schemas gave typed handlers, stateless mode needed only a fresh server and transport per request, and the same client package worked in Node and in the browser (see "What worked well" above).
+- MCP specification: the MUST level requirements of the Streamable HTTP transport were clear enough to write transport tests against them (`tests/interfaces/mcp-http.test.ts`, added 2026-10-18).
+- Node.js 24: the built in `node:sqlite` needs no native build step, and `npm ci` completed on Windows in the measured run above.
+
+**What cost time or caused a wrong turn** (details in [FRICTION_LOG.md](FRICTION_LOG.md); dates from the git history):
+
+- 2026-10-18, SDK version (entry 1): research was needed to confirm that SDK 1.32.1 negotiates protocol 2025-11-25 while the README points new work to v2.
+- 2026-10-18, Origin validation (entry 2): the Express helper validates Host but not Origin, so we wrote our own guard.
+- 2026-10-18, strict TypeScript (entry 3): `exactOptionalPropertyTypes` rejected `sessionIdGenerator: undefined` and the transport type, which needed a cast.
+- 2026-10-18, GET probe (entry 4): the browser client's GET probe returns 405 from a stateless server and looks like an error in demos.
+- 2026-10-18, Alexa+ tools (entry 10): the MCP Toolkit, CLI and Web Simulator are not available to participants, so the real Alexa+ path could not be tried.
+- 2026-10-22, elicitation (entry 5): a time boxed spike showed that elicitation cannot complete on a stateless endpoint, and the error names a missing client capability instead of the missing session.
+
+TO CONFIRM BY AUTHOR: Did you sign up for, or request access to, any Alexa+ developer program or toolkit, and if so how did that feel? The repository records only that these tools are not available to participants.
+
+TO CONFIRM BY AUTHOR: Was creating the Amazon developer account or registering on Devpost part of your onboarding, and did any step there cost time?
+
+**One suggestion per tool that cost time.**
+
+- MCP TypeScript SDK: add a README table that maps each SDK line to the protocol versions it negotiates by default, and state in the stateless and elicitation sections that server to client requests need a session.
+- MCP specification: add a short checklist for a minimal compliant stateless server.
+- Alexa+ developer documentation: provide a public, sandboxed simulator, even a limited one, and state near the top of each page which tools are partner only.
