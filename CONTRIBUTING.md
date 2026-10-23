@@ -31,9 +31,10 @@ Run these before opening a pull request. CI runs the same steps.
 
 ## Conventions
 
-- **Layers.** The domain layer (`src/domain`) is pure: no I/O, no clock, no randomness. ESLint
-  enforces this. Decisions belong to the Resolution Compiler, never to the interface or to a
-  language model.
+- **Layers.** The domain layer (`src/domain`) must not import from the application,
+  infrastructure or interface layers, or from I/O modules such as `node:fs`, `node:sqlite`,
+  Express or the MCP SDK. ESLint enforces this. Decisions belong to the Resolution Compiler,
+  never to the interface or to a language model.
 - **Language models.** The optional model interpreter produces claims by the customer only. It
   must not be able to approve, decide eligibility, submit or confirm.
 - **Evidence.** Numbers in documentation come from a run of the repository. Do not add a figure
