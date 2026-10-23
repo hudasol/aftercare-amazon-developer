@@ -1680,3 +1680,69 @@ details.more summary {
   color: var(--ink-2);
   font-size: var(--t-sm);
 }
+
+/* ---- connect panel ------------------------------------------------------- */
+
+.panel .muted {
+  color: var(--ink-2);
+  font-size: var(--t-sm);
+}
+
+.copy-block {
+  margin-top: var(--s3);
+}
+
+.copy-block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  color: var(--ink-2);
+  margin-bottom: var(--s1);
+}
+
+.copy-block pre {
+  margin: 0;
+  padding: var(--s3);
+  overflow-x: auto;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  font-size: var(--t-xs);
+}
+
+.tool-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s1);
+}
+
+.tool-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 15rem) 1fr auto;
+  gap: var(--s3);
+  align-items: baseline;
+  padding: var(--s1) 0;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--t-sm);
+}
+
+.tool-tag {
+  color: var(--ink-2);
+  font-size: var(--t-xs);
+}
+
+@media (max-width: 720px) {
+  .tool-list li {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+
+.copy-block + h3 {
+  margin-top: var(--s5);
+}

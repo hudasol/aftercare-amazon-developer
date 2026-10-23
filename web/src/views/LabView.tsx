@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ConnectPanel } from '../components/ConnectPanel';
 import { Journey, StatePill, Tick } from '../components/common';
 import { api } from '../lib/api';
 import { clock, longDate, sentence, shortDate } from '../lib/format';
@@ -366,6 +367,11 @@ export function LabView({ caseId, session }: { caseId: string | null; session: S
           </section>
         )
       )}
+
+      <ConnectPanel
+        endpoint={`${window.location.origin}/mcp`}
+        protocolVersion={session?.mcp.protocolVersion ?? '2025-11-25'}
+      />
     </main>
   );
 }

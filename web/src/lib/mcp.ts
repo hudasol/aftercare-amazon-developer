@@ -86,3 +86,21 @@ export async function callTool<T = ToolCaseResult>(
   );
   return content;
 }
+
+export interface ToolSummary {
+  name: string;
+  title: string;
+  readOnly: boolean;
+}
+
+/** The tools the server advertises, read through the same client the assistant uses. */
+export async function listTools(): Promise<ToolSummary[]> {
+  const { client } = await mcpConnection();
+  const { tools } = await client.listTools();
+  lastContact = Date.now();
+  return tools.map((tool) => ({
+    name: tool.name,
+    title: tool.title ?? tool.name,
+    readOnly: tool.annotations?.readOnlyHint === true,
+  }));
+}
