@@ -81,6 +81,15 @@ export function App() {
       ) : (
         <AssistantView caseId={route.caseId} session={session} />
       )}
+      <footer className="site-foot">
+        <span>Fictional retailer and data. Not affiliated with or endorsed by Amazon.</span>
+        <span className="site-foot-links">
+          <a href="https://github.com/hudasol/aftercare-amazon-developer">Source</a>
+          <a href="https://github.com/hudasol/aftercare-amazon-developer/blob/main/LICENSE">
+            Apache 2.0
+          </a>
+        </span>
+      </footer>
     </div>
   );
 }

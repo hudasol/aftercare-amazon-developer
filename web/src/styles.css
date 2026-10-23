@@ -252,6 +252,23 @@ a {
   padding: 2px var(--s3);
 }
 
+.site-foot {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--s2) var(--s4);
+  padding: var(--s4) var(--s5);
+  border-top: 1px solid var(--line);
+  color: var(--ink-2);
+  font-size: var(--t-xs);
+}
+
+.site-foot-links {
+  display: flex;
+  gap: var(--s4);
+}
+
 .nav {
   margin-left: auto;
   display: flex;
