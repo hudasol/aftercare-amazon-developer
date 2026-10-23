@@ -4,6 +4,24 @@
   "private": true,
   "description": "State-aware purchase-resolution agent: evidence, policy constraints, explicit approvals and persistent case state decide the next justified action.",
   "license": "Apache-2.0",
+  "author": "Huda Mueen",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hudasol/aftercare-amazon-developer.git"
+  },
+  "homepage": "https://github.com/hudasol/aftercare-amazon-developer#readme",
+  "bugs": {
+    "url": "https://github.com/hudasol/aftercare-amazon-developer/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "streamable-http",
+    "agent",
+    "returns",
+    "typescript",
+    "sqlite"
+  ],
   "type": "module",
   "engines": {
     "node": ">=24.0.0"
