@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-22",
+  "date": "2026-10-23",
   "messages": 30,
   "model": "qwen2.5:3b-instruct",
   "rules": {
@@ -227,13 +227,13 @@
   "modelAssisted": {
     "interpreter": "llm@1",
     "correct": {
-      "goal": 26,
-      "reason": 27,
+      "goal": 29,
+      "reason": 24,
       "product": 29,
       "timeHint": 30
     },
     "allFieldsCorrect": 22,
-    "fallbacks": 1,
+    "fallbacks": 0,
     "items": [
       {
         "id": "P01",
@@ -267,7 +267,7 @@
           "product"
         ],
         "fallback": null,
-        "productQuery": "earbuds"
+        "productQuery": "cans"
       },
       {
         "id": "P06",
@@ -277,9 +277,7 @@
       },
       {
         "id": "P07",
-        "missed": [
-          "goal"
-        ],
+        "missed": [],
         "fallback": null,
         "productQuery": "headphones"
       },
@@ -291,9 +289,11 @@
       },
       {
         "id": "P09",
-        "missed": [],
+        "missed": [
+          "reason"
+        ],
         "fallback": null,
-        "productQuery": "coffee dripper"
+        "productQuery": "coffee dripper set"
       },
       {
         "id": "P10",
@@ -305,9 +305,7 @@
       },
       {
         "id": "P11",
-        "missed": [
-          "goal"
-        ],
+        "missed": [],
         "fallback": null,
         "productQuery": "headphones"
       },
@@ -321,7 +319,7 @@
         "id": "P13",
         "missed": [],
         "fallback": null,
-        "productQuery": "headphones"
+        "productQuery": "halden aria headphones"
       },
       {
         "id": "P14",
@@ -369,17 +367,15 @@
       },
       {
         "id": "P21",
-        "missed": [
-          "goal"
-        ],
+        "missed": [],
         "fallback": null,
-        "productQuery": "noise cancelling headphones"
+        "productQuery": "headphones"
       },
       {
         "id": "P22",
         "missed": [],
         "fallback": null,
-        "productQuery": "pour-over set"
+        "productQuery": "pour over set"
       },
       {
         "id": "P23",
@@ -397,8 +393,10 @@
       },
       {
         "id": "P25",
-        "missed": [],
-        "fallback": "model output did not match the expected shape",
+        "missed": [
+          "reason"
+        ],
+        "fallback": null,
         "productQuery": null
       },
       {
@@ -421,7 +419,9 @@
       },
       {
         "id": "P29",
-        "missed": [],
+        "missed": [
+          "reason"
+        ],
         "fallback": null,
         "productQuery": null
       },
