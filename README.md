@@ -151,7 +151,7 @@ S01 to S14 are the original set; their results for AFTERCARE and the baseline ar
 
 ## Tests
 
-- **79 unit, integration and transport tests** (`npm test`). They cover the authority policy, policy versions, the lifecycle, compiler decisions and invariants; the full flagship journey through the application layer, including restart and crash recovery; MCP over real HTTP with the official client; and exact reproduction of the evaluation results.
+- **109 unit, integration and transport tests** (`npm test`). They cover the authority policy, policy versions, the lifecycle, compiler decisions and invariants; the full flagship journey through the application layer, including restart and crash recovery; MCP over real HTTP with the official client; and exact reproduction of the evaluation results.
 - **7 Playwright end-to-end tests** (`npm run test:e2e`). They cover the full journey in a real browser, the refusal path, Lab controls, a real server restart mid-case, axe accessibility checks, keyboard-only approval, and phone-width layout.
 
 ## Repository map
