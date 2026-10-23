@@ -31,6 +31,10 @@ Built for the **Alexa+ track** of the Amazon Developer Hackathon (AmazonAppDev 2
 | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | ![Assistant asking which pair the customer has, with both orders and deadlines](docs/screenshots/02-blocked-which-pair.png) | ![Return slip stamped Outcome unknown while AFTERCARE checks the retailer](docs/screenshots/04-outcome-unknown.png) | ![Resolution Lab showing the journey, decision trace and evidence](docs/screenshots/06b-lab-decision.png) |
 
+Any MCP client can connect to the same endpoint. The Resolution Lab has a panel with the endpoint, a client configuration, a `curl` call that lists the tools, and the tool list read from the running server:
+
+![Connect panel in the Resolution Lab showing the endpoint, a client configuration, a curl example and the ten advertised tools](docs/screenshots/08-connect-client.png)
+
 ## Quick start
 
 Requires **Node.js 24+** (uses the built-in `node:sqlite`). No API keys or accounts needed.
