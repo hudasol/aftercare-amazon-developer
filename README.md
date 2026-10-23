@@ -118,11 +118,11 @@ AFTERCARE_LLM_BASE_URL=http://localhost:11434/v1 AFTERCARE_LLM_MODEL=qwen2.5:3b-
 Free ways to run it: a local [Ollama](https://ollama.com) server (no key, as above), or a free tier key from any provider with an OpenAI compatible endpoint (`AFTERCARE_LLM_API_KEY`). Free tiers change; check the provider's current terms.
 
 - Only the customer's message is sent. No order or case data leaves the server.
-- The model may supply the goal, reason, product, issue description and purchase time. Serial and order numbers always come from the rules interpreter, so an identifier the model makes up can never enter a case. Agreement in chat is still never approval.
+- The model may supply the product, issue description and purchase time. Its goal is used only when the rules interpreter found none, and its reason only when it quotes words that appear in the message. Serial and order numbers always come from the rules interpreter, so an identifier the model makes up can never enter a case. Agreement in chat is still never approval.
 - The reply must be JSON of the expected shape. Invalid output, an HTTP error or a timeout (`AFTERCARE_LLM_TIMEOUT_MS`, 8 seconds by default) falls back to the rules interpreter, and the Lab timeline shows which interpreter read each message (`llm@1` or `rules@1`, with the fallback reason).
 - A small local model on a laptop CPU can take several seconds per message and longer on its first call; raise the timeout if it keeps falling back.
 
-On 30 hand labelled messages, the rules interpreter read all four scored fields correctly on 16 and the model assisted interpreter with qwen2.5:3b-instruct on 22. The model was better on the reason and worse on the goal, and it stated a reason the customer did not give on 2 messages. Details and every miss: [docs/INTERPRETER_EVALUATION.md](docs/INTERPRETER_EVALUATION.md).
+On 30 hand labelled messages (`npm run eval:interpreters`, 2026-10-23), the rules interpreter read all four scored fields correctly on 16 and the model assisted interpreter with qwen2.5:3b-instruct on 22. The model assisted reading was right on the goal for 29, the reason for 24 and the product for 29, against 29, 18 and 28 for the rules alone. It still stated a reason the customer did not give on 4 messages: the model often quotes the request itself, which the quote check accepts. Details and every miss: [docs/INTERPRETER_EVALUATION.md](docs/INTERPRETER_EVALUATION.md).
 
 ### MCP tools
 
@@ -151,7 +151,7 @@ S01 to S14 are the original set; their results for AFTERCARE and the baseline ar
 
 ## Tests
 
-- **109 unit, integration and transport tests** (`npm test`). They cover the authority policy, policy versions, the lifecycle, compiler decisions and invariants; the full flagship journey through the application layer, including restart and crash recovery; MCP over real HTTP with the official client; and exact reproduction of the evaluation results.
+- **115 unit, integration and transport tests** (`npm test`). They cover the authority policy, policy versions, the lifecycle, compiler decisions and invariants; the full flagship journey through the application layer, including restart and crash recovery; MCP over real HTTP with the official client; and exact reproduction of the evaluation results.
 - **7 Playwright end-to-end tests** (`npm run test:e2e`). They cover the full journey in a real browser, the refusal path, Lab controls, a real server restart mid-case, axe accessibility checks, keyboard-only approval, and phone-width layout.
 
 ## Repository map
