@@ -100,7 +100,7 @@ ${n} customer messages, labelled by hand before either interpreter was run on th
 - **product**: the extracted product query finds exactly the labelled order in the fictional sandbox (or no product is extracted when none is named).
 - **time hint**: a purchase time is picked up when, and only when, the message states one.
 
-Serial and order numbers are not scored: they always come from the rules interpreter. The model assisted reading uses the model for goal, reason, product, issue description and purchase time, and the rules interpreter for everything else. When the model fails (invalid output, HTTP error, timeout), the service uses the rules reading, and so does this score.
+Serial and order numbers are not scored: they always come from the rules interpreter. The model assisted reading takes the goal from the rules interpreter when it found one and from the model otherwise, accepts the model's reason only with a quote that appears in the message, uses the model for product, issue description and purchase time, and the rules interpreter for everything else. When the model fails (invalid output, HTTP error, timeout), the service uses the rules reading, and so does this score.
 
 ## Results
 
