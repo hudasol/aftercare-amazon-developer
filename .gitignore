@@ -12,4 +12,3 @@ test-results/
 playwright-report/
 coverage/
 .vite/
-.claude/launch.json
