@@ -44,6 +44,17 @@ test('capture the Return Rescue journey', async ({ page }) => {
   await page.evaluate(() => window.scrollBy(0, -16));
   await page.screenshot({ path: `${dir}/06b-lab-decision.png` });
 
+  await expect(page.locator('#lab-connect li').first()).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, 0));
+  const box = await page.locator('#lab-connect').boundingBox();
+  if (box) {
+    await page.screenshot({
+      path: `${dir}/08-connect-client.png`,
+      fullPage: true,
+      clip: { x: box.x, y: box.y, width: box.width, height: box.height },
+    });
+  }
+
   await page.setViewportSize({ width: 390, height: 844 });
   await page.request.post('/api/demo/reset');
   await page.goto('/');
