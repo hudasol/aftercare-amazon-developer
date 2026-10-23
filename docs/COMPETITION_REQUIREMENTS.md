@@ -1,7 +1,7 @@
 # Competition requirements and compliance
 
 **Competition:** Build, Ship, Shape: Amazon Developer Hackathon (AmazonAppDev 2026), Alexa+ track
-**Checked:** 2026-10-18, against the primary sources listed at the end of this file
+**Checked:** 2026-10-18, and again on 2026-10-23 (Rules and FAQ), against the primary sources listed at the end of this file
 **Submission deadline:** Friday 23 October 2026, 12:00 pm Pacific Time
 
 This file separates what the official sources say (quoted) from our reading of them. Quotes are kept short; follow the links for full text. Devpost blocked automated page fetches (HTTP 403), so pages were downloaded with curl and read directly.
@@ -45,7 +45,7 @@ How AFTERCARE answers this:
 
 ## 4. Hosting (sources conflict)
 
-- FAQ: "hosting isn't required"; a "locally runnable public repo plus your demo video is enough".
+- FAQ: "hosting isn't required"; a "locally runnable public repo plus your demo video is enough". On 2026-10-23 the FAQ also said: "Your MCP server doesn't need to stay running after you submit."
 - Forum 45411 and forum 45493 (the newest reply, about 7 days before our check): the endpoint "needs to be live and accessible till the end of the judging period".
 - The judging period is given as Nov 9 to Nov 20 (Rules) and Oct 26 to Nov 20 (schedule page).
 
@@ -85,7 +85,7 @@ The customer experience is a web MCP client, labeled _"Simulated Alexa+-style su
 - The flagship Return Rescue workflow: a blocker, the customer resolving it, a scoped approval, execution, an ambiguous timeout, safe reconciliation, a verified outcome, and resuming the case after a restart.
 - The baseline comparison, using measured numbers only.
 
-## Sources (accessed 2026-10-18)
+## Sources (accessed 2026-10-18; Rules and FAQ checked again 2026-10-23)
 
 - Overview: https://amazonappdev2026.devpost.com/
 - Rules: https://amazonappdev2026.devpost.com/rules
