@@ -1,5 +1,10 @@
 # AFTERCARE
 
+[![CI](https://github.com/hudasol/aftercare-amazon-developer/actions/workflows/ci.yml/badge.svg)](https://github.com/hudasol/aftercare-amazon-developer/actions/workflows/ci.yml)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Node.js 24+](https://img.shields.io/badge/node-%E2%89%A524-339933.svg)](.nvmrc)
+[![MCP 2025-11-25](https://img.shields.io/badge/MCP-2025--11--25-5a4a8c.svg)](https://modelcontextprotocol.io/specification/2025-11-25)
+
 **A purchase-resolution agent that knows when it cannot safely proceed.**
 
 AFTERCARE helps a customer sort out a problem with something they bought, such as a return. It opens a persistent case, checks the order and the store's actual policy, asks only for what it needs, and acts only after the customer approves the exact terms. Then it confirms the outcome with the store before calling anything done. When the evidence is incomplete, conflicting or uncertain, it says so and stops instead of guessing.
